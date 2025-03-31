@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全景服务平台 - 深度资料</title>
+    <!-- 外部依赖引入 START -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- 外部依赖引入 END -->
+
+    <!-- 页面样式 START -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #EBEEF5;
+        }
+        .container {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        .header {
+            height: 64px;
+            background-color: #EBEEF5;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 250px; /* 从200px增加到250px */
+            right: 0;
+            z-index: 100;
+            box-shadow: none;
+        }
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-logo img {
+            width: 24px;
+            height: 24px;
+        }
+        .header-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            color: #409eff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .header-right .el-icon {
+            margin-left: 8px;
+            font-size: 16px;
+        }
+        .sidebar {
+            flex-shrink: 0;
+            width: 250px; /* 从200px增加到250px */
+            height: 100vh;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 101;
+            box-shadow: 1px 0 4px rgba(0, 0, 0, 0.1);
+        }
+        .main-content {
+            flex: 1;
+            width: 0;
+            height: 100vh;
+            background-color: #EBEEF5;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 84px 20px 20px 270px; /* 从220px增加到270px */
+        }
+        .p5w-logo {
+            height: 85px;
+            background: url(p5w_logo.png) no-repeat 50% 50% / auto 45px;
+        }
+        .menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-top: 0;
+            border: none;
+            background: transparent;
+        }
+        .menu-item {
+            margin-bottom: 15px;
+            padding: 0;
+            height: 35px;
+            line-height: 35px;
+            border-radius: 5px;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .menu-item:hover {
+            background-color: #f5f7fa;
+            color: #409eff;
+        }
+        .menu-item.active {
+            background-color: #e6f7ff;
+            color: #409eff;
+        }
+        .menu-item i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        .menu-group-title {
+            padding: 16px 20px;
+            color: #999;
+            font-size: 13px;
+            font-weight: 500;
+            background-color: #fff;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 15px;
+        }
+        /* 顶部导航样式 */
+        .nav-menu {
+            background: transparent;
+            border-radius: 4px;
+            padding: 0;
+            margin-bottom: 16px;
+        }
+        .nav-menu-items {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .nav-item:hover {
+            color: #409eff;
+            background: #f5f7fa;
+        }
+        .nav-item.active {
+            color: #409eff;
+            background: #e6f7ff;
+        }
+        /* 快捷操作按钮 */
+        .quick-actions {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        /* 内容区布局 */
+        .content-layout {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .content-main {
+            flex: 2;
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            min-width: 600px;
+        }
+        .content-side {
+            flex: 1;
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            min-width: 300px;
+        }
+        /* 数据统计 */
+        .statistics {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto; /* 允许水平滚动 */
+            padding-bottom: 12px; /* 为滚动条预留空间 */
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+        }
+        .statistics::-webkit-scrollbar {
+            height: 6px;
+        }
+        .statistics::-webkit-scrollbar-thumb {
+            background-color: #ddd;
+            border-radius: 3px;
+        }
+        .statistics::-webkit-scrollbar-track {
+            background-color: #f5f5f5;
+        }
+        .stat-item {
+            flex: 0 0 auto; /* 不允许缩放，保持原始大小 */
+            min-width: 180px; /* 设置最小宽度 */
+            background: #f5f7fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: left;
+        }
+        .stat-number {
+            font-size: 28px;
+            color: #409eff;
+            font-weight: bold;
+            margin-bottom: 8px;
+            white-space: nowrap; /* 防止数字换行 */
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            white-space: nowrap; /* 防止标签文字换行 */
+        }
+        /* 项目库头部样式 */
+        .database-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding: 16px 20px;
+            background: #fff;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .database-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .database-title i {
+            font-size: 24px;
+            color: #333;
+        }
+        .database-title h1 {
+            font-size: 18px;
+            color: #333;
+            margin: 0;
+            font-weight: 500;
+        }
+        .database-actions {
+            display: flex;
+            gap: 16px;
+        }
+        .action-button {
+            padding: 4px 12px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .action-button:hover {
+            color: #409eff;
+        }
+        .action-button.active {
+            color: #409eff;
+            font-weight: 500;
+            position: relative;
+        }
+        .action-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 2px;
+            background-color: #409eff;
+            border-radius: 1px;
+        }
+        /* 快捷连接样式 */
+        .fastLink {
+            display: flex;
+            padding: 8px;
+            align-items: center;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .fastLink .colT {
+            flex-shrink: 0;
+            padding: 3px 16px;
+            line-height: 20px;
+            color: #9BB1C7;
+            font-weight: bold;
+        }
+        .fastLink .info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .fastLink .col {
+            padding-left: 12px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            border-left: 1px solid #eee;
+            gap: 8px;
+        }
+        .fastLink .item {
+            flex-shrink: 0;
+            padding: 0 16px 0 12px;
+            position: relative;
+            height: 32px;
+            line-height: 32px;
+            border: 1px solid;
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            background-color: #F1F7FE;
+            border-color: #CDE5FF;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .fastLink .item i {
+            font-size: 20px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            background: linear-gradient(0deg, #067EFF, #82BDFF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .fastLink .item:hover {
+            border-color: var(--el-color-primary);
+            color: var(--el-color-primary);
+        }
+        .fastLink .col:nth-child(2) .item {
+            background-color: #FFEFF1;
+            border-color: #FCCFCF;
+        }
+        .fastLink .col:nth-child(2) .item i {
+            background: linear-gradient(0deg, #FB5C5C, #FF7F84);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .fastLink .col:nth-child(2) .item:hover {
+            border-color: #FB5C5C;
+            color: #FB5C5C;
+        }
+        /* 子菜单样式 */
+        .section-submenu {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 20px;
+            padding: 0 4px;
+        }
+        .submenu-item {
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            padding: 6px 0;
+            position: relative;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .submenu-item:hover {
+            color: #409eff;
+        }
+        .submenu-item.active {
+            color: #409eff;
+            font-weight: 500;
+        }
+        .submenu-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #409eff;
+            border-radius: 1px;
+        }
+        /* 数据看板区域样式 */
+        .content-side h2.section-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .chart-container {
+            height: 400px; /* 增加高度 */
+            margin: 24px 0 32px 0; /* 调整上下间距 */
+            background: #fff;
+            border-radius: 4px;
+            padding: 16px 0; /* 添加内边距 */
+        }
+        .company-list h3.section-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        /* 表格样式 */
+        .el-table th {
+            background-color: #f5f7fa !important;
+            font-weight: bold !important;
+            color: #333 !important;
+            text-align: center !important;
+        }
+        
+        /* 近期活跃企业列表样式 */
+        .company-list {
+            position: relative;
+            overflow: hidden;
+        }
+        .company-list .el-timeline {
+            height: 240px;
+            overflow: hidden;
+            position: relative;
+        }
+        .company-list .el-timeline-item {
+            padding-bottom: 16px;
+        }
+        .company-list .el-timeline-item__content {
+            font-size: 14px;
+            color: #333;
+        }
+        .company-list .el-timeline-item__timestamp {
+            font-size: 12px;
+            color: #999;
+        }
+        @keyframes scrollUp {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(-100%);
+            }
+        }
+        .scroll-container {
+            animation: scrollUp 20s linear infinite;
+            animation-delay: 2s;
+        }
+        .scroll-container:hover {
+            animation-play-state: paused;
+        }
+    </style>
+    <!-- 页面样式 END -->
+</head>
+<body>
+    <div id="app">
+        <!-- 页面主容器 START -->
+        <div class="container">
+            <!-- 左侧边栏 START -->
+            <div class="sidebar">
+                <!-- Logo区域 -->
+                <div class="p5w-logo"></div>
+                
+                <!-- 菜单导航区域 START -->
+                <div class="menu">
+                    <!-- 首页菜单项 -->
+                    <div class="menu-item">
+                        <a href="project_library.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%;">
+                            <i class="i-ri-home-4-line"></i>
+                            首页
+                        </a>
+                    </div>
+
+                    <!-- 全景智慧投融资菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">全景智慧投融资</div>
+                        <div class="menu-item active">
+                            <i class="i-ri-stack-line"></i>
+                            项目库
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-stack-line"></i>
+                            中介机构
+                        </div>
+                    </div>
+
+                    <!-- 价值传播菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">价值传播</div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            发起会议(路演)
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            智慧投关中心
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            观点传播中心
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            全景IP专题展播
+                        </div>
+                    </div>
+
+                    <!-- 全景影响力菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">全景影响力</div>
+                        <div class="menu-item">
+                            <i class="i-ri-compass-discover-line"></i>
+                            宣传平台及内容定制
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-compass-discover-line"></i>
+                            企业ESG
+                        </div>
+                    </div>
+
+                    <!-- 会员菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">会员</div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-diamond-line"></i>
+                            权益
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-diamond-line"></i>
+                            场地租赁
+                        </div>
+                    </div>
+                </div>
+                <!-- 菜单导航区域 END -->
+            </div>
+            <!-- 左侧边栏 END -->
+
+            <!-- 主内容区域 START -->
+            <div class="main-content">
+                <!-- 顶部导航栏 START -->
+                <div class="header">
+                    <div class="header-logo">
+                        <span class="header-title">全景服务平台原型图</span>
+                    </div>
+                    <div class="header-right">
+                        <span>去登录</span>
+                        <i class="el-icon-user"></i>
+                    </div>
+                </div>
+                <!-- 顶部导航栏 END -->
+
+                <!-- 快捷连接导航区域 START -->
+                <div class="nav-menu">
+                    <div class="fastLink">
+                        <p class="colT">快 捷<br/>连 接</p>
+                        <section class="info">
+                            <div class="col">
+                                <div class="item"><i class="i-ri-apps-fill"></i>找项目</div>
+                                <div class="item"><i class="i-ri-copper-coin-fill"></i>找资金</div>
+                                <div class="item"><i class="i-ri-eye-2-line"></i>找综合解决方案</div>
+                            </div>
+                            <div class="col">
+                                <div class="item"><i class="i-ri-copper-diamond-fill"></i>会员权益</div>
+                                <div class="item"><i class="i-mingcute-safety-certificate-fill"></i>机构认证</div>
+                            </div>
+                            <div class="col">
+                                <div class="item"><i class="i-ri-contacts-fill"></i>联系专员</div>
+                                <div class="item"><i class="i-ri-smartphone-fill"></i>移动办公</div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                <!-- 快捷连接导航区域 END -->
+
+                <!-- 快捷操作按钮区域 START -->
+                <div class="quick-actions">
+                    <el-button type="primary">
+                        <i class="el-icon-message"></i>
+                        一级市场
+                    </el-button>
+                    <el-button>
+                        <i class="el-icon-setting"></i>
+                        机构交流
+                    </el-button>
+                </div>
+                <!-- 快捷操作按钮区域 END -->
+
+                <!-- 内容布局区域 START -->
+                <div class="content-layout">
+                    <!-- 项目库头部 START -->
+                    <div class="database-header" style="width: 100%;">
+                        <div class="database-title">
+                            <i class="i-ri-database-2-line"></i>
+                            <h1>全景项目库</h1>
+                        </div>
+                        <div class="database-actions">
+                            <span class="action-button active" style="padding: 4px 12px; font-size: 13px; color: #409eff; font-weight: 500; cursor: pointer; position: relative;">
+                                全景推荐
+                                <span style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 2px; background-color: #409eff; border-radius: 1px;"></span>
+                            </span>
+                            <span class="action-button">区域推荐</span>
+                            <span class="action-button">买方发布</span>
+                        </div>
+                    </div>
+                    <!-- 项目库头部 END -->
+
+                    <div style="display: flex; gap: 16px; width: 100%;">
+                        <!-- 主要内容区域 START -->
+                        <div class="content-main">
+                            <!-- 子菜单 START -->
+                            <div class="section-submenu">
+                                <div class="submenu-item" onclick="window.location.href='project_list.html'">预约对话</div>
+                                <div class="submenu-item active">深度资料</div>
+                                <div class="submenu-item" onclick="window.location.href='custom_promotion.html'">定制推广</div>
+                            </div>
+                            <!-- 子菜单 END -->
+                            
+                            <!-- 深度资料的主要内容区域 START -->
+                            <div class="deep-info-content">
+                                <!-- 筛选按钮区域 START -->
+                                <div style="margin-bottom: 16px; display: flex; gap: 16px;">
+                                    <el-select
+                                        v-model="selectedProvinces"
+                                        multiple
+                                        collapse-tags
+                                        collapse-tags-tooltip
+                                        placeholder="选择注册省份"
+                                        style="width: 240px;"
+                                        clearable
+                                    >
+                                        <el-option
+                                            v-for="item in provinceOptions"
+                                            :key="item"
+                                            :label="item"
+                                            :value="item"
+                                        />
+                                    </el-select>
+                                    <el-select
+                                        v-model="selectedIndustries"
+                                        multiple
+                                        collapse-tags
+                                        collapse-tags-tooltip
+                                        placeholder="选择行业"
+                                        style="width: 240px;"
+                                        clearable
+                                    >
+                                        <el-option
+                                            v-for="item in industryOptions"
+                                            :key="item"
+                                            :label="item"
+                                            :value="item"
+                                        />
+                                    </el-select>
+                                    <el-select
+                                        v-model="selectedInvitation"
+                                        placeholder="是否接受邀约"
+                                        style="width: 240px;"
+                                        clearable
+                                    >
+                                        <el-option
+                                            v-for="item in invitationOptions"
+                                            :key="item"
+                                            :label="item"
+                                            :value="item"
+                                        />
+                                    </el-select>
+                                </div>
+                                <!-- 筛选按钮区域 END -->
+
+                                <el-table :data="filteredTableData" style="width: 100%; font-size: 13px;" height="900" border stripe>
+                                    <el-table-column prop="entityId" label="entityId" width="100"></el-table-column>
+                                    <el-table-column prop="companyName" label="公司名称" width="180"></el-table-column>
+                                    <el-table-column prop="province" label="注册省" width="100"></el-table-column>
+                                    <el-table-column prop="city" label="注册市" width="100"></el-table-column>
+                                    <el-table-column prop="industry" label="行业" width="120"></el-table-column>
+                                    <el-table-column prop="description" label="企业简介" width="200"></el-table-column>
+                                    <el-table-column prop="latestRound" label="最近融资轮次" width="120"></el-table-column>
+                                    <el-table-column prop="allRounds" label="企业融资阶段（全部）" width="180"></el-table-column>
+                                    <el-table-column prop="specialIndex" label="特色指标" width="120"></el-table-column>
+                                    <el-table-column label="是否接受邀约" width="120">
+                                        <template #default="scope">
+                                            <el-button 
+                                                v-if="scope.row.acceptInvitation === '是'" 
+                                                type="primary" 
+                                                size="small">
+                                                立即邀约
+                                            </el-button>
+                                            <span v-else>否</span>
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+                                
+                                <!-- 分页导航 -->
+                                <div class="pagination-container" style="margin-top: 20px; display: flex; justify-content: center;">
+                                    <el-pagination
+                                        v-model:current-page="currentPage"
+                                        v-model:page-size="pageSize"
+                                        :page-sizes="[10, 15, 20, 30]"
+                                        layout="total, sizes, prev, pager, next, jumper"
+                                        :total="filteredData.length"
+                                        @size-change="handleSizeChange"
+                                        @current-change="handleCurrentChange"
+                                    />
+                                </div>
+                            </div>
+                            <!-- 深度资料的主要内容区域 END -->
+                            
+                        </div>
+                        <!-- 主要内容区域 END -->
+
+                        <!-- 侧边数据看板区域 START -->
+                        <div class="content-side">
+                            <h2 class="section-title">数据看板</h2>
+                            <!-- 统计数据区域 -->
+                            <div class="statistics">
+                                <div class="stat-item">
+                                    <div class="stat-number">7,265</div>
+                                    <div class="stat-label">全景项目总数</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">3,671</div>
+                                    <div class="stat-label">近期新增项目</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">156</div>
+                                    <div class="stat-label">近期活跃</div>
+                                </div>
+                            </div>
+                            
+                            <!-- 饼图区域 -->
+                            <div id="pieChart" class="chart-container"></div>
+
+                            <!-- 企业列表区域 -->
+                            <div class="company-list">
+                                <h3 class="section-title">近期活跃企业</h3>
+                                <el-timeline>
+                                    <div class="scroll-container">
+                                        <el-timeline-item timestamp="刚刚">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                广东全国科技创新投资有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="23分钟前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                广州创新科工程有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="45分钟前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                深圳市智能科技发展有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="1小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                杭州数字科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="2小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                北京未来创新科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="3小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                上海智慧金融科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="4小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                成都新能源科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="5小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                武汉生物医疗科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <!-- 复制前面的项目用于无缝滚动 -->
+                                        <el-timeline-item timestamp="刚刚">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                广东全国科技创新投资有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="23分钟前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                广州创新科工程有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="45分钟前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                深圳市智能科技发展有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="1小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                杭州数字科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                    </div>
+                                </el-timeline>
+                            </div>
+                        </div>
+                        <!-- 侧边数据看板区域 END -->
+                    </div>
+                    
+                    <!-- 深度资料详情区域 START -->
+                    <div style="width: 100%; margin-top: 20px;">
+                        <div style="background-color: #fff; border-radius: 4px; padding: 20px;">
+                            <h2 style="font-size: 18px; color: #333; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #eee;">项目概览</h2>
+                            
+                            <div class="company-detail">
+                                <table class="el-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                    <tbody>
+                                        <tr>
+                                            <td style="width: 15%; padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">entityId</td>
+                                            <td style="width: 35%; padding: 12px; border: 1px solid #EBEEF5;">1000001112</td>
+                                            <td style="width: 15%; padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">公司名称</td>
+                                            <td style="width: 35%; padding: 12px; border: 1px solid #EBEEF5;">涅斐勒(上海)实业有限公司</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">注册省</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">上海</td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">注册市</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">上海市</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">行业</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">企业简介</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">最近融资轮次</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">企业融资阶段（全部）</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">特色指标</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">是否接受邀约</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">企业类型</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">有限责任公司(自然人投资或控股)</td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">成立日期</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">2013/08/15</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">统一社会信用代码</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">91310110076417291G</td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">疑似实际控制人</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">丁耀华</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">最终受益人</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">丁耀华,沈梁</td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">所有股东</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">丁耀华、51.00（万人民币）、51.00 %,沈梁、49.00（万人民币）、49.00 %</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">股东数量</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">2</td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">经营范围</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">经营范围详情</td>
+                                            <td colspan="3" style="padding: 12px; border: 1px solid #EBEEF5; line-height: 1.6;">一般项目：生产加工文化用品，办公用品、办公设备、文化用品，母婴用品，玩具，日用百货，五金交电、劳防用品、化工产品（除危险化学品、监控化学品、民用爆炸物品、易制毒化学品）、消毒用品（不含危险化学品）、第一、二类医疗器械的销售，货物进出口，技术进出口，进出口代理，技术服务、技术开发、技术咨询、技术交流、技术转让、技术推广，商务咨询，工业设计服务，展览展示服务，物业管理。（除依法须经批准的项目外，凭营业执照依法自主开展经营活动）</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">企业资质</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">注册区</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">杨浦区</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">注册资本</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">CNY 100.00 万</td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">经营地址</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">上海市</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">最近融资日期</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">硬科技赛道</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">来觅赛道</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">战新产业</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">最近融资金额</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">融资总轮数</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">机构投资方</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">机构投资方参投实体</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">官网</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">阶段融资金额</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">融资金额币种</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">阶段融资日期</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">法定代表人</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">丁耀华</td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">是否有国资背景</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">否</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">是否有央企背景</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;">否</td>
+                                            <td style="padding: 12px; background-color: #f5f7fa; font-weight: bold; text-align: right; border: 1px solid #EBEEF5;">推荐机构</td>
+                                            <td style="padding: 12px; border: 1px solid #EBEEF5;"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 深度资料详情区域 END -->
+                </div>
+                <!-- 内容布局区域 END -->
+            </div>
+            <!-- 主内容区域 END -->
+        </div>
+        <!-- 页面主容器 END -->
+    </div>
+
+    <!-- Vue应用初始化脚本 START -->
+    <script>
+        const { createApp, ref, computed, watch } = Vue
+        const app = createApp({
+            setup() {
+                const { createApp, ref, computed, watch } = Vue;
+                
+                // 表格数据和分页相关
+                const currentPage = ref(1);
+                const pageSize = ref(15);
+                const tableData = ref([
+                    {
+                        entityId: 'E001',
+                        companyName: '广州智能科技有限公司',
+                        province: '广东',
+                        city: '广州',
+                        industry: '人工智能',
+                        description: '专注于AI算法研发和应用的高新技术企业',
+                        latestRound: 'B轮',
+                        allRounds: '天使轮,A轮,B轮',
+                        specialIndex: '专利数:45',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E002',
+                        companyName: '深圳未来电子科技有限公司',
+                        province: '广东',
+                        city: '深圳',
+                        industry: '电子科技',
+                        description: '专注于智能硬件研发与生产的科技公司',
+                        latestRound: 'A轮',
+                        allRounds: '种子轮,A轮',
+                        specialIndex: '年增长率:78%',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E003',
+                        companyName: '北京数据智能有限公司',
+                        province: '北京',
+                        city: '北京',
+                        industry: '大数据',
+                        description: '提供企业级大数据解决方案的技术公司',
+                        latestRound: 'C轮',
+                        allRounds: '天使轮,A轮,B轮,C轮',
+                        specialIndex: '客户数:230+',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E004',
+                        companyName: '上海金融科技有限公司',
+                        province: '上海',
+                        city: '上海',
+                        industry: '金融科技',
+                        description: '专注于金融领域的科技创新企业',
+                        latestRound: 'B+轮',
+                        allRounds: '种子轮,A轮,B轮,B+轮',
+                        specialIndex: '交易额:12亿',
+                        acceptInvitation: '否'
+                    },
+                    {
+                        entityId: 'E005',
+                        companyName: '杭州网络科技有限公司',
+                        province: '浙江',
+                        city: '杭州',
+                        industry: '互联网',
+                        description: '提供互联网平台解决方案的科技公司',
+                        latestRound: 'A+轮',
+                        allRounds: '天使轮,A轮,A+轮',
+                        specialIndex: '月活用户:500万',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E006',
+                        companyName: '成都医疗科技有限公司',
+                        province: '四川',
+                        city: '成都',
+                        industry: '医疗健康',
+                        description: '专注于医疗器械研发的高科技企业',
+                        latestRound: 'B轮',
+                        allRounds: '种子轮,A轮,B轮',
+                        specialIndex: '专利数:28',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E007',
+                        companyName: '武汉生物技术有限公司',
+                        province: '湖北',
+                        city: '武汉',
+                        industry: '生物技术',
+                        description: '从事生物医药研发的创新企业',
+                        latestRound: 'A轮',
+                        allRounds: '天使轮,A轮',
+                        specialIndex: '研发投入比:35%',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E008',
+                        companyName: '南京新能源科技有限公司',
+                        province: '江苏',
+                        city: '南京',
+                        industry: '新能源',
+                        description: '专注于新能源技术研发与应用的企业',
+                        latestRound: 'C轮',
+                        allRounds: '种子轮,A轮,B轮,C轮',
+                        specialIndex: '年产值:3.5亿',
+                        acceptInvitation: '否'
+                    },
+                    {
+                        entityId: 'E009',
+                        companyName: '西安智能制造有限公司',
+                        province: '陕西',
+                        city: '西安',
+                        industry: '智能制造',
+                        description: '提供智能制造解决方案的高新技术企业',
+                        latestRound: 'B轮',
+                        allRounds: '天使轮,A轮,B轮',
+                        specialIndex: '自动化率:92%',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E010',
+                        companyName: '青岛海洋科技有限公司',
+                        province: '山东',
+                        city: '青岛',
+                        industry: '海洋科技',
+                        description: '专注于海洋资源开发与保护的科技公司',
+                        latestRound: 'A轮',
+                        allRounds: '种子轮,A轮',
+                        specialIndex: '专利数:17',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E011',
+                        companyName: '厦门软件科技有限公司',
+                        province: '福建',
+                        city: '厦门',
+                        industry: '软件开发',
+                        description: '专注于企业级软件开发的技术公司',
+                        latestRound: 'B轮',
+                        allRounds: '天使轮,A轮,B轮',
+                        specialIndex: '客户数:150+',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E012',
+                        companyName: '重庆汽车科技有限公司',
+                        province: '重庆',
+                        city: '重庆',
+                        industry: '汽车科技',
+                        description: '从事智能汽车技术研发的创新企业',
+                        latestRound: 'C轮',
+                        allRounds: '种子轮,A轮,B轮,C轮',
+                        specialIndex: '年销售额:8亿',
+                        acceptInvitation: '否'
+                    },
+                    {
+                        entityId: 'E013',
+                        companyName: '天津环保科技有限公司',
+                        province: '天津',
+                        city: '天津',
+                        industry: '环保科技',
+                        description: '提供环保解决方案的高科技企业',
+                        latestRound: 'A轮',
+                        allRounds: '天使轮,A轮',
+                        specialIndex: '减排量:12万吨',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E014',
+                        companyName: '长沙智慧城市科技有限公司',
+                        province: '湖南',
+                        city: '长沙',
+                        industry: '智慧城市',
+                        description: '专注于智慧城市建设的科技企业',
+                        latestRound: 'B轮',
+                        allRounds: '种子轮,A轮,B轮',
+                        specialIndex: '项目数:25',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E015',
+                        companyName: '郑州农业科技有限公司',
+                        province: '河南',
+                        city: '郑州',
+                        industry: '农业科技',
+                        description: '从事现代农业技术研发的创新企业',
+                        latestRound: 'A+轮',
+                        allRounds: '天使轮,A轮,A+轮',
+                        specialIndex: '增产率:45%',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E016',
+                        companyName: '合肥量子科技有限公司',
+                        province: '安徽',
+                        city: '合肥',
+                        industry: '量子科技',
+                        description: '专注于量子计算研发的前沿科技公司',
+                        latestRound: 'D轮',
+                        allRounds: '天使轮,A轮,B轮,C轮,D轮',
+                        specialIndex: '研发投入:5亿',
+                        acceptInvitation: '否'
+                    },
+                    {
+                        entityId: 'E017',
+                        companyName: '昆明生物多样性研究有限公司',
+                        province: '云南',
+                        city: '昆明',
+                        industry: '生物研究',
+                        description: '从事生物多样性保护与研究的科技企业',
+                        latestRound: 'B轮',
+                        allRounds: '种子轮,A轮,B轮',
+                        specialIndex: '物种保护:300+',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E018',
+                        companyName: '宁波材料科技有限公司',
+                        province: '浙江',
+                        city: '宁波',
+                        industry: '新材料',
+                        description: '专注于新型材料研发与应用的高新技术企业',
+                        latestRound: 'C轮',
+                        allRounds: '天使轮,A轮,B轮,C轮',
+                        specialIndex: '专利数:56',
+                        acceptInvitation: '是'
+                    },
+                    {
+                        entityId: 'E019',
+                        companyName: '苏州半导体科技有限公司',
+                        province: '江苏',
+                        city: '苏州',
+                        industry: '半导体',
+                        description: '从事半导体芯片研发与生产的科技企业',
+                        latestRound: 'D轮',
+                        allRounds: '种子轮,A轮,B轮,C轮,D轮',
+                        specialIndex: '年产能:2000万片',
+                        acceptInvitation: '否'
+                    },
+                    {
+                        entityId: 'E020',
+                        companyName: '大连海洋工程有限公司',
+                        province: '辽宁',
+                        city: '大连',
+                        industry: '海洋工程',
+                        description: '专注于海洋工程技术研发与应用的企业',
+                        latestRound: 'B轮',
+                        allRounds: '天使轮,A轮,B轮',
+                        specialIndex: '项目数:18',
+                        acceptInvitation: '是'
+                    }
+                ]);
+
+                // 筛选相关数据
+                const selectedProvinces = ref([]);
+                const selectedIndustries = ref([]);
+                const selectedInvitation = ref('');
+                const invitationOptions = ['是', '否'];
+
+                // 获取所有可选的省份和行业选项
+                const provinceOptions = computed(() => {
+                    return [...new Set(tableData.value.map(item => item.province))].filter(Boolean);
+                });
+
+                const industryOptions = computed(() => {
+                    return [...new Set(tableData.value.map(item => item.industry))].filter(Boolean);
+                });
+
+                // 筛选后的完整数据
+                const filteredData = computed(() => {
+                    return tableData.value.filter(item => {
+                        const provinceMatch = selectedProvinces.value.length === 0 || selectedProvinces.value.includes(item.province);
+                        const industryMatch = selectedIndustries.value.length === 0 || selectedIndustries.value.includes(item.industry);
+                        const invitationMatch = !selectedInvitation.value || item.acceptInvitation === selectedInvitation.value;
+                        return provinceMatch && industryMatch && invitationMatch;
+                    });
+                });
+
+                // 分页后的数据
+                const filteredTableData = computed(() => {
+                    return filteredData.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
+                });
+
+                // 监听筛选条件变化，重置页码
+                watch([selectedProvinces, selectedIndustries, selectedInvitation], () => {
+                    currentPage.value = 1;
+                });
+
+                // 分页处理方法
+                const handleSizeChange = (val) => {
+                    pageSize.value = val;
+                    currentPage.value = 1;
+                };
+                
+                const handleCurrentChange = (val) => {
+                    currentPage.value = val;
+                };
+
+                return {
+                    tableData,
+                    currentPage,
+                    pageSize,
+                    handleSizeChange,
+                    handleCurrentChange,
+                    selectedProvinces,
+                    selectedIndustries,
+                    selectedInvitation,
+                    invitationOptions,
+                    provinceOptions,
+                    industryOptions,
+                    filteredTableData,
+                    filteredData
+                }
+            },
+            mounted() {
+                // 初始化饼图
+                const chartDom = document.getElementById('pieChart');
+                const myChart = echarts.init(chartDom);
+                const option = {
+                    title: {
+                        text: '项目分布',
+                        subtext: '行业与区域',
+                        left: 'center',
+                        top: 0,
+                        padding: [0, 0, 20, 0],
+                        textStyle: {
+                            fontSize: 16,
+                            fontWeight: 500
+                        },
+                        subtextStyle: {
+                            fontSize: 12,
+                            padding: [8, 0, 0, 0]
+                        }
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)'
+                    },
+                    legend: [{
+                        orient: 'horizontal',
+                        bottom: 20,
+                        data: ['华南', '华东', '华北', '西南', '其他地区'],
+                        textStyle: {
+                            fontSize: 12
+                        },
+                        itemWidth: 12,
+                        itemHeight: 12,
+                        itemGap: 16,
+                        left: 'center'
+                    }, {
+                        orient: 'horizontal',
+                        bottom: 0,
+                        data: ['科技创新', '金融投资', '医疗健康', '文化传媒', '其他'],
+                        textStyle: {
+                            fontSize: 12
+                        },
+                        itemWidth: 12,
+                        itemHeight: 12,
+                        itemGap: 16,
+                        left: 'center'
+                    }],
+                    series: [
+                        {
+                            name: '区域分布',
+                            type: 'pie',
+                            selectedMode: 'single',
+                            radius: [0, '35%'],
+                            center: ['50%', '48%'],
+                            label: {
+                                position: 'inner',
+                                fontSize: 12
+                            },
+                            labelLine: {
+                                show: false
+                            },
+                            data: [
+                                { value: 1548, name: '华南' },
+                                { value: 1235, name: '华东' },
+                                { value: 980, name: '华北' },
+                                { value: 684, name: '西南' },
+                                { value: 400, name: '其他地区' }
+                            ]
+                        },
+                        {
+                            name: '行业分布',
+                            type: 'pie',
+                            radius: ['45%', '65%'],
+                            center: ['50%', '48%'],
+                            labelLine: {
+                                length: 15,
+                                length2: 10,
+                                maxSurfaceAngle: 80
+                            },
+                            label: {
+                                formatter: '{b}\n{c} ({d}%)',
+                                fontSize: 12,
+                                lineHeight: 16,
+                                alignTo: 'edge',
+                                edgeDistance: '10%',
+                                distanceToLabelLine: 5
+                            },
+                            data: [
+                                { 
+                                    value: 1048, 
+                                    name: '科技创新',
+                                    itemStyle: { color: '#5470c6' }
+                                },
+                                { 
+                                    value: 735, 
+                                    name: '金融投资',
+                                    itemStyle: { color: '#91cc75' }
+                                },
+                                { 
+                                    value: 580, 
+                                    name: '医疗健康',
+                                    itemStyle: { color: '#fac858' }
+                                },
+                                { 
+                                    value: 484, 
+                                    name: '文化传媒',
+                                    itemStyle: { color: '#ee6666' }
+                                },
+                                { 
+                                    value: 300, 
+                                    name: '其他',
+                                    itemStyle: { color: '#73c0de' }
+                                }
+                            ]
+                        }
+                    ]
+                };
+                myChart.setOption(option);
+
+                // 监听窗口大小变化，调整图表大小
+                window.addEventListener('resize', () => {
+                    myChart.resize();
+                });
+            }
+        })
+
+        // 注册Element Plus图标
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component)
+        }
+
+        app.use(ElementPlus)
+        app.mount('#app')
+    </script>
+    <!-- Vue应用初始化脚本 END -->
+</body>
+</html>

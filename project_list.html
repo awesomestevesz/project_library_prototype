@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全景服务平台</title>
+    <!-- 外部依赖引入 START -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- 外部依赖引入 END -->
+
+    <!-- 页面样式 START -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #EBEEF5;
+        }
+        .container {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        .header {
+            height: 64px;
+            background-color: #EBEEF5;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            right: 0;
+            z-index: 100;
+            box-shadow: none;
+        }
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-logo img {
+            width: 24px;
+            height: 24px;
+        }
+        .header-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            color: #409eff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .header-right .el-icon {
+            margin-left: 8px;
+            font-size: 16px;
+        }
+        .sidebar {
+            flex-shrink: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 101;
+            box-shadow: 1px 0 4px rgba(0, 0, 0, 0.1);
+        }
+        .main-content {
+            flex: 1;
+            width: 0;
+            height: 100vh;
+            background-color: #EBEEF5;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 84px 20px 20px 270px;
+        }
+        .p5w-logo {
+            height: 85px;
+            background: url(p5w_logo.png) no-repeat 50% 50% / auto 45px;
+        }
+        .menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-top: 0;
+            border: none;
+            background: transparent;
+        }
+        .menu-item {
+            margin-bottom: 15px;
+            padding: 0;
+            height: 35px;
+            line-height: 35px;
+            border-radius: 5px;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .menu-item:hover {
+            background-color: #f5f7fa;
+            color: #409eff;
+        }
+        .menu-item.active {
+            background-color: #e6f7ff;
+            color: #409eff;
+        }
+        .menu-item i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        .menu-group-title {
+            padding: 16px 20px;
+            color: #999;
+            font-size: 13px;
+            font-weight: 500;
+            background-color: #fff;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 15px;
+        }
+        /* 顶部导航样式 */
+        .nav-menu {
+            background: transparent;
+            border-radius: 4px;
+            padding: 0;
+            margin-bottom: 16px;
+        }
+        .fastLink {
+            display: flex;
+            padding: 8px;
+            align-items: center;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .fastLink .colT {
+            flex-shrink: 0;
+            padding: 3px 16px;
+            line-height: 20px;
+            color: #9BB1C7;
+            font-weight: bold;
+        }
+        .fastLink .info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .fastLink .col {
+            padding-left: 12px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            border-left: 1px solid #eee;
+            gap: 8px;
+        }
+        .fastLink .item {
+            flex-shrink: 0;
+            padding: 0 16px 0 12px;
+            position: relative;
+            height: 32px;
+            line-height: 32px;
+            border: 1px solid;
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            background-color: #F1F7FE;
+            border-color: #CDE5FF;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .fastLink .item i {
+            font-size: 20px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            background: linear-gradient(0deg, #067EFF, #82BDFF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .fastLink .item:hover {
+            border-color: var(--el-color-primary);
+            color: var(--el-color-primary);
+        }
+        .fastLink .col:nth-child(2) .item {
+            background-color: #FFEFF1;
+            border-color: #FCCFCF;
+        }
+        .fastLink .col:nth-child(2) .item i {
+            background: linear-gradient(0deg, #FB5C5C, #FF7F84);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .fastLink .col:nth-child(2) .item:hover {
+            border-color: #FB5C5C;
+            color: #FB5C5C;
+        }
+        /* 内容区布局 */
+        .content-layout {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .content-main {
+            flex: 2;
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            min-width: 600px;
+        }
+        .content-side {
+            flex: 1;
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            min-width: 300px;
+        }
+        /* 项目库头部样式 */
+        .database-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding: 16px 20px;
+            background: #fff;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .database-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .database-title i {
+            font-size: 24px;
+            color: #333;
+        }
+        .database-title h1 {
+            font-size: 18px;
+            color: #333;
+            margin: 0;
+            font-weight: 500;
+        }
+        .database-actions {
+            display: flex;
+            gap: 16px;
+        }
+        .action-button {
+            padding: 4px 12px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .action-button:hover {
+            color: #409eff;
+        }
+        .action-button.active {
+            color: #409eff;
+            font-weight: 500;
+            position: relative;
+        }
+        .action-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 2px;
+            background-color: #409eff;
+            border-radius: 1px;
+        }
+        /* 子菜单样式 */
+        .section-submenu {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 20px;
+            padding: 0 4px;
+        }
+        .submenu-item {
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            padding: 6px 0;
+            position: relative;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .submenu-item:hover {
+            color: #409eff;
+        }
+        .submenu-item.active {
+            color: #409eff;
+            font-weight: 500;
+        }
+        .submenu-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #409eff;
+            border-radius: 1px;
+        }
+        .video-container {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .video-list-container {
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        /* 数据统计 */
+        .statistics {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 4px;
+            margin: 0 -4px 20px -4px;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+        }
+        .statistics::-webkit-scrollbar {
+            height: 4px;
+        }
+        .statistics::-webkit-scrollbar-track {
+            background: #f5f5f5;
+            border-radius: 2px;
+        }
+        .statistics::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 2px;
+        }
+        .statistics::-webkit-scrollbar-thumb:hover {
+            background: #ccc;
+        }
+        .stat-item {
+            flex: 0 0 200px;
+            padding: 16px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: 600;
+            color: #409EFF;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+        /* 饼图区域 */
+        .chart-container {
+            height: 400px;
+            margin: 24px 0 32px 0;
+            background: #fff;
+            border-radius: 4px;
+            padding: 16px 0;
+        }
+        /* 近期活跃企业列表样式 */
+        .company-list {
+            position: relative;
+            overflow: hidden;
+        }
+        .company-list .el-timeline {
+            height: 240px;
+            overflow: hidden;
+            position: relative;
+        }
+        .company-list .el-timeline-item {
+            padding-bottom: 16px;
+        }
+        .company-list .el-timeline-item__content {
+            font-size: 14px;
+            color: #333;
+        }
+        .company-list .el-timeline-item__timestamp {
+            font-size: 12px;
+            color: #999;
+        }
+        @keyframes scrollUp {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(-100%);
+            }
+        }
+        .scroll-container {
+            animation: scrollUp 20s linear infinite;
+            animation-delay: 2s;
+        }
+        .scroll-container:hover {
+            animation-play-state: paused;
+        }
+        /* 数据看板区域样式 */
+        .content-side h2.section-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .company-list h3.section-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        /* 快捷操作按钮 */
+        .quick-actions {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        /* 视频播放器样式 */
+        .card-media {
+            position: relative;
+            padding-top: 56.25%;
+            background: #000;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .card-media video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .card-content {
+            padding: 16px;
+        }
+        .card-content h3 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+        .card-content p {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .project-tags {
+            display: flex;
+            gap: 8px;
+        }
+        .tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .tag-success {
+            background-color: #f0f9eb;
+            color: #67c23a;
+        }
+        .tag-warning {
+            background-color: #fdf6ec;
+            color: #e6a23c;
+        }
+        .tag-info {
+            background-color: #f4f4f5;
+            color: #909399;
+        }
+        .tag-ai {
+            background-color: #ecf5ff;
+            color: #409eff;
+        }
+        .tag-company {
+            background-color: #fff1f0;
+            color: #ff4d4f;
+        }
+        /* 新闻列表样式 */
+        .news-list {
+            flex: 0 0 50%;
+            display: flex;
+            flex-direction: column;
+            max-height: 480px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+        }
+        .news-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .news-list::-webkit-scrollbar-track {
+            background: #f5f5f5;
+            border-radius: 2px;
+        }
+        .news-list::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 2px;
+        }
+        .news-list::-webkit-scrollbar-thumb:hover {
+            background: #ccc;
+        }
+        .news-item {
+            width: 100%;
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            background: #fff;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .news-item:last-child {
+            margin-bottom: 0;
+        }
+        .news-item:hover {
+            background: #f5f7fa;
+        }
+        .news-image {
+            flex: 0 0 80px;
+            height: 60px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .news-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .news-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .news-title {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.4;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .news-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .news-subtitle {
+            font-size: 12px;
+            color: #409EFF;
+        }
+        .news-date {
+            font-size: 12px;
+            color: #999;
+        }
+        /* 时间线样式 */
+        .timeline {
+            position: relative;
+            height: 280px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .scroll-container {
+            animation: scrollUpDown 20s linear infinite;
+            padding-right: 16px;
+        }
+        .scroll-container:hover {
+            animation-play-state: paused;
+        }
+        @keyframes scrollUpDown {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(calc(-50%));
+            }
+        }
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 10px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            background: #fff;
+            transition: all 0.3s;
+        }
+        .timeline-item:hover {
+            background: #f5f7fa;
+        }
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        .timestamp {
+            flex-shrink: 0;
+            font-size: 12px;
+            color: #999;
+            width: 80px;
+        }
+        .content {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.4;
+        }
+        /* 项目列表样式 */
+        .project-list {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin: 0 -4px;
+            padding: 4px;
+        }
+        .project-card {
+            flex: 0 0 360px;
+            background: #fff;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .recent-activities {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .video-player {
+            flex: 0 0 calc(50% - 8px);
+            background: #fff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .news-list {
+            flex: 0 0 calc(50% - 8px);
+            display: flex;
+            flex-direction: column;
+            max-height: 480px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin: 0 0 16px 0;
+            line-height: 1.4;
+        }
+        .section-header {
+            margin-bottom: 16px;
+        }
+        .section-header .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin: 0;
+            line-height: 1.4;
+        }
+        /* 浮窗样式 */
+        .activity-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .activity-dialog-overlay.show {
+            display: flex;
+        }
+        .activity-dialog {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+        .activity-dialog .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            color: #ff4d4f;
+        }
+        .activity-dialog .content {
+            min-height: 400px;
+        }
+        /* 活动浮窗样式 */
+        .activity-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .activity-dialog-overlay.show {
+            display: flex !important;
+        }
+
+        .activity-dialog {
+            background: white;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .activity-dialog .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            cursor: pointer;
+            font-size: 24px;
+            color: #ff4d4f;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .activity-dialog .content {
+            min-height: 400px;
+        }
+        /* 子栏目选项 */
+        .sub-categories {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 0 8px;
+        }
+        .sub-category {
+            position: relative;
+            transition: all 0.3s;
+        }
+        .sub-category.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #409EFF;
+            border-radius: 1px;
+        }
+        .sub-category:hover {
+            color: #409EFF;
+        }
+        .content-tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+            background-color: #ecf5ff;
+            color: #409EFF;
+        }
+    </style>
+    <!-- 页面样式 END -->
+</head>
+<body>
+    <div id="app">
+        <!-- 页面主容器 START -->
+        <div class="container">
+            <!-- 左侧边栏 START -->
+            <div class="sidebar">
+                <!-- Logo区域 -->
+                <div class="p5w-logo"></div>
+                
+                <!-- 菜单导航区域 START -->
+                <div class="menu">
+                    <!-- 首页菜单项 -->
+                    <div class="menu-item">
+                        <a href="project_library.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%;">
+                            <i class="i-ri-home-4-line"></i>
+                            首页
+                        </a>
+                    </div>
+
+                    <!-- 全景智慧投融资菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">全景智慧投融资</div>
+                        <div class="menu-item active">
+                            <i class="i-ri-stack-line"></i>
+                            项目库
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-stack-line"></i>
+                            中介机构
+                        </div>
+                    </div>
+
+                    <!-- 价值传播菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">价值传播</div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            发起会议(路演)
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            智慧投关中心
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            观点传播中心
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            全景IP专题展播
+                        </div>
+                    </div>
+
+                    <!-- 全景影响力菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">全景影响力</div>
+                        <div class="menu-item">
+                            <i class="i-ri-compass-discover-line"></i>
+                            宣传平台及内容定制
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-compass-discover-line"></i>
+                            企业ESG
+                        </div>
+                    </div>
+
+                    <!-- 会员菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">会员</div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-diamond-line"></i>
+                            权益
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-diamond-line"></i>
+                            场地租赁
+                        </div>
+                    </div>
+                </div>
+                <!-- 菜单导航区域 END -->
+            </div>
+            <!-- 左侧边栏 END -->
+
+            <!-- 主内容区域 START -->
+            <div class="main-content">
+                <!-- 顶部导航栏 START -->
+                <div class="header">
+                    <div class="header-logo">
+                        <span class="header-title">全景服务平台原型图</span>
+                    </div>
+                    <div class="header-right">
+                        <span>去登录</span>
+                        <i class="el-icon-user"></i>
+                    </div>
+                </div>
+                <!-- 顶部导航栏 END -->
+
+                <!-- 快捷连接导航区域 START -->
+                <div class="nav-menu">
+                    <div class="fastLink">
+                        <p class="colT">快 捷<br/>连 接</p>
+                        <section class="info">
+                            <div class="col">
+                                <div class="item"><i class="i-ri-apps-fill"></i>找项目</div>
+                                <div class="item"><i class="i-ri-copper-coin-fill"></i>找资金</div>
+                                <div class="item"><i class="i-ri-eye-2-line"></i>找综合解决方案</div>
+                            </div>
+                            <div class="col">
+                                <div class="item"><i class="i-ri-copper-diamond-fill"></i>会员权益</div>
+                                <div class="item"><i class="i-mingcute-safety-certificate-fill"></i>机构认证</div>
+                            </div>
+                            <div class="col">
+                                <div class="item"><i class="i-ri-contacts-fill"></i>联系专员</div>
+                                <div class="item"><i class="i-ri-smartphone-fill"></i>移动办公</div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                <!-- 快捷连接导航区域 END -->
+
+                <!-- 快捷操作按钮区域 START -->
+                <div class="quick-actions">
+                    <el-button type="primary" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="el-icon-message"></i>
+                        一级市场
+                    </el-button>
+                    <el-button style="display: flex; align-items: center; gap: 8px;">
+                        <i class="el-icon-setting"></i>
+                        机构交流
+                    </el-button>
+                </div>
+                <!-- 快捷操作按钮区域 END -->
+
+                <!-- 内容布局区域 START -->
+                <div class="content-layout">
+                    <!-- 项目库头部 START -->
+                    <div class="database-header" style="width: 100%; margin-bottom: 16px; padding: 16px 20px; background: #fff; border-radius: 4px; box-sizing: border-box;">
+                        <div class="database-title" style="display: flex; align-items: center; gap: 8px;">
+                            <i class="i-ri-database-2-line" style="font-size: 24px; color: #333;"></i>
+                            <h1 style="font-size: 18px; color: #333; margin: 0; font-weight: 500;">全景项目库</h1>
+                        </div>
+                        <div class="database-actions" style="display: flex; gap: 16px;">
+                            <span class="action-button active" style="padding: 4px 12px; font-size: 13px; color: #409eff; font-weight: 500; cursor: pointer; position: relative;">
+                                全景推荐
+                                <span style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 2px; background-color: #409eff; border-radius: 1px;"></span>
+                            </span>
+                            <span class="action-button" style="padding: 4px 12px; font-size: 13px; color: #666; cursor: pointer;">区域推荐</span>
+                            <span class="action-button" style="padding: 4px 12px; font-size: 13px; color: #666; cursor: pointer;">买方发布</span>
+                        </div>
+                    </div>
+                    <!-- 项目库头部 END -->
+
+                    <div style="display: flex; gap: 16px; width: 100%;">
+                        <!-- 主要内容区域 START -->
+                    <div class="content-main">
+                            <!-- 置顶项目区域 -->
+                        <div class="project-section">
+                                <!-- 子菜单 START -->
+                                <div class="section-submenu">
+                                    <div class="submenu-item active">预约对话</div>
+                                    <div class="submenu-item" onclick="window.location.href='deep_info.html'">深度资料</div>
+                                    <div class="submenu-item" onclick="window.location.href='custom_promotion.html'">定制推广</div>
+                                </div>
+                                <!-- 子菜单 END -->
+                                
+                            <div class="section-header">
+                                <div class="section-title">最新置顶</div>
+                            </div>
+                            <div class="project-list">
+                                <div class="project-card">
+                                        <div class="card-media" style="position: relative; padding-top: 56.25%; background: #000; border-radius: 4px; overflow: hidden;">
+                                            <video 
+                                                id="cardVideo1"
+                                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" 
+                                                poster="fmWechatIMG674.jpg"
+                                                preload="none">
+                                                您的浏览器不支持 HTML5 视频播放。
+                                            </video>
+                                            <div class="play-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8 5.14v14.72a.75.75 0 001.15.63l10.27-7.36a.75.75 0 000-1.26L9.15 4.51A.75.75 0 008 5.14z" fill="#FFFFFF"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="card-content">
+                                    <h3>"科技中国"科技智库"投融资路演活动（杭州）专场-第十二期</h3>
+                                    <p>2022-08-08 14:00-17:30</p>
+                                    <div class="project-tags">
+                                                <span class="tag tag-success">往期回顾</span>
+                                                <span class="tag tag-company">企业详情</span>
+                                                <span class="tag tag-ai">AI 总结</span>
+                                    </div>
+                                </div>
+                                    </div>
+                                    <div class="project-card">
+                                        <div class="card-media" style="position: relative; padding-top: 56.25%; background: #000; border-radius: 4px; overflow: hidden;">
+                                            <video 
+                                                id="cardVideo2"
+                                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" 
+                                                poster="3-27.jpg"
+                                                preload="none">
+                                                您的浏览器不支持 HTML5 视频播放。
+                                            </video>
+                                            <div class="play-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8 5.14v14.72a.75.75 0 001.15.63l10.27-7.36a.75.75 0 000-1.26L9.15 4.51A.75.75 0 008 5.14z" fill="#FFFFFF"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="card-content">
+                                            <h3>全景财经对话深圳黑屋文化，揭秘参与电影哪吒2制作过程 | 掘金苗圃</h3>
+                                            <p>2024-03-15 09:30-12:00</p>
+                                            <div class="project-tags">
+                                                <span class="tag tag-success">往期回顾</span>
+                                                <span class="tag tag-company">企业详情</span>
+                                                <span class="tag tag-ai">AI 总结</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="project-card" style="background: linear-gradient(135deg, #F5F7FA, #E4E7EB); border-radius: 4px; overflow: hidden;">
+                                        <div class="card-content" style="height: 200px; display: flex; flex-direction: column; position: relative; padding: 24px;">
+                                            <div style="position: absolute; top: 0; right: 0; width: 160px; height: 160px; background: radial-gradient(circle at center, rgba(64, 158, 255, 0.08), transparent 70%); transform: translate(30%, -30%);"></div>
+                                            <div style="margin-bottom: 16px;">
+                                                <span style="display: block; font-size: 28px; font-weight: 700; color: #FB5C5C; letter-spacing: 2px; margin-bottom: 4px;">投融资项目推广</span>
+                                                <span style="font-size: 28px; font-weight: 700; color: #FB5C5C; letter-spacing: 2px;">PROMOTE</span>
+                                            </div>
+                                            <div style="position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                                                <div>
+                                                    <h3 style="margin-bottom: 12px; color: #2C3E50; font-size: 15px; line-height: 1.4; font-weight: 500;">活动定制，支持按与全景项目库中的数千家活跃产融项目进行多种方式的沟通</h3>
+                                                    <p style="color: #5D7290; margin-bottom: 24px; font-size: 12px; line-height: 1.5;">根据您选择的具体活动类型，全景专员将为您提供会议秘书、邀约对手方等多项贴心服务。</p>
+                                                </div>
+                                                <button class="button-primary" @click="showActivityDialog = true" style="position: relative; z-index: 2;">
+                                                    <i class="icon-plus"></i>
+                                                    新建活动
+                                                </button>
+                                            </div>
+                                            <div style="position: absolute; bottom: 0; left: 0; width: 120px; height: 120px; background: radial-gradient(circle at center, rgba(64, 158, 255, 0.08), transparent 70%); transform: translate(-30%, 30%);"></div>
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+
+                            <!-- 近期活动区域 -->
+                        <div class="project-section">
+                            <div class="section-header" style="margin-top: 32px;">
+                                    <div class="section-title">近期活跃</div>
+                            </div>
+                                <div class="recent-activities">
+                                    <div class="video-player" style="flex: 0 0 calc(50% - 10px);">
+                                        <div class="player-container" style="position: relative; padding-top: 56.25%; background: #000; border-radius: 4px; overflow: hidden;">
+                                            <video 
+                                                id="recentVideo"
+                                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" 
+                                                poster="近期活跃.jpg"
+                                                preload="none">
+                                                您的浏览器不支持 HTML5 视频播放。
+                                            </video>
+                                            <div class="play-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8 5.14v14.72a.75.75 0 001.15.63l10.27-7.36a.75.75 0 000-1.26L9.15 4.51A.75.75 0 008 5.14z" fill="#FFFFFF"/>
+                                                </svg>
+                            </div>
+                        </div>
+                                        <div class="video-info" style="padding: 16px;">
+                                            <div class="video-meta" style="font-size: 12px; color: #666; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                                                <span style="color: #409EFF;">全景网</span>
+                                                <span style="color: #999;">2025-08-08</span>
+                    </div>
+                                            <h3 style="font-size: 16px; color: #333; margin: 0 0 12px 0; font-weight: 500; line-height: 1.4;">
+                                                全景看市 | 295家杭州公布"市级重点拟上市企业"名单
+                                                <span class="tag tag-ai" style="cursor: pointer;" @click="showAiDialog">AI 总结</span>
+                                            </h3>
+                                            <div class="video-desc" style="font-size: 14px; color: #666; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px;">
+                                                杭州市地方金融监督管理局发布2024年杭州市市级重点拟上市企业名单，共有295家企业入选。这些企业涵盖了人工智能、生物医药、新能源、高端装备制造等多个领域。入选企业将获得政策支持、融资对接、上市辅导等多方面服务。本次发布的名单显示，杭州持续推进"凤凰行动"计划，助力优质企业对接资本市场，推动区域经济高质量发展。
+                                            </div>
+                                            <div style="margin-top: 12px;">
+                                                <span style="font-size: 13px; color: #666; margin-right: 8px;">提及企业：</span>
+                                                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                                                    <span class="tag tag-company" style="cursor: pointer;">菏泽医药</span>
+                                                    <span class="tag tag-company" style="cursor: pointer;">胡庆余堂</span>
+                                                    <span class="tag tag-company" style="cursor: pointer;">连连数字</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- 新闻列表区域 -->
+                                    <div class="news-list" style="flex: 0 0 50%; display: flex; flex-direction: column; max-height: 480px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+                                        <!-- 子栏目选项 -->
+                                        <div class="sub-categories" style="display: flex; gap: 16px; margin-bottom: 16px; padding: 0 8px;">
+                                            <span class="sub-category active" style="font-size: 14px; color: #409EFF; cursor: pointer; padding-bottom: 8px; position: relative;">项目介绍</span>
+                                            <span class="sub-category" style="font-size: 14px; color: #666; cursor: pointer; padding-bottom: 8px;">高管访谈</span>
+                                            <span class="sub-category" style="font-size: 14px; color: #666; cursor: pointer; padding-bottom: 8px;">视频招股书</span>
+                                        </div>
+                                        <style>
+                                            .sub-category {
+                                                position: relative;
+                                                transition: all 0.3s;
+                                            }
+                                            .sub-category.active::after {
+                                                content: '';
+                                                position: absolute;
+                                                bottom: 0;
+                                                left: 0;
+                                                width: 100%;
+                                                height: 2px;
+                                                background-color: #409EFF;
+                                                border-radius: 1px;
+                                            }
+                                            .sub-category:hover {
+                                                color: #409EFF;
+                                            }
+                                            .content-tag {
+                                                padding: 2px 8px;
+                                                border-radius: 4px;
+                                                font-size: 12px;
+                                                margin-left: 8px;
+                                                background-color: #ecf5ff;
+                                                color: #409EFF;
+                                            }
+                                        </style>
+                                            <!-- 新闻列表 -->
+                                            <div class="news-item">
+                                                <div class="news-image">
+                                                    <img src="fmWechatIMG674.jpg" alt="新闻图片">
+                                                </div>
+                                                <div class="news-content">
+                                                    <div class="news-title">苏州极钻纳米科技有限公司</div>
+                                                    <div class="news-subtitle-text" style="font-size: 12px; color: #666; margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">科技中国 · 科技智能 "投融资路演活动（杭州）专场-第十二期</div>
+                                                    <div class="news-info">
+                                                        <span class="news-subtitle">项目介绍</span>
+                                                        <span class="news-date">2024-03-24</span>
+                                                        <button class="invite-btn" style="margin-left: 4px; padding: 2px 8px; font-size: 12px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffccc7; border-radius: 4px; cursor: pointer; transition: all 0.3s;" @click="showActivityDialog = true">发起邀约</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="news-item">
+                                                <div class="news-image">
+                                                    <img src="fmWechatIMG674.jpg" alt="新闻图片">
+                                                </div>
+                                                <div class="news-content">
+                                                    <div class="news-title">湖南省潇湘智控科技有限公司</div>
+                                                    <div class="news-subtitle-text" style="font-size: 12px; color: #666; margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">科技中国 · 科技智能 "投融资路演活动（杭州）专场-第十二期</div>
+                                                    <div class="news-info">
+                                                        <span class="news-subtitle">项目路演</span>
+                                                        <span class="news-date">2024-03-23</span>
+                                                        <button class="invite-btn" style="margin-left: 4px; padding: 2px 8px; font-size: 12px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffccc7; border-radius: 4px; cursor: pointer; transition: all 0.3s;" @click="showActivityDialog = true">发起邀约</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="news-item">
+                                                <div class="news-image">
+                                                    <img src="fmWechatIMG674.jpg" alt="新闻图片">
+                                                </div>
+                                                <div class="news-content">
+                                                    <div class="news-title">氪婧科技（上海）有限公司</div>
+                                                    <div class="news-subtitle-text" style="font-size: 12px; color: #666; margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">科技中国 · 科技智能 "投融资路演活动（杭州）专场-第十二期</div>
+                                                    <div class="news-info">
+                                                        <span class="news-subtitle">项目路演</span>
+                                                        <span class="news-date">2024-03-22</span>
+                                                        <button class="invite-btn" style="margin-left: 4px; padding: 2px 8px; font-size: 12px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffccc7; border-radius: 4px; cursor: pointer; transition: all 0.3s;" @click="showActivityDialog = true">发起邀约</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="news-item">
+                                                <div class="news-image">
+                                                    <img src="3-27.jpg" alt="新闻图片">
+                                                </div>
+                                                <div class="news-content">
+                                                    <div class="news-title">深圳黑屋文化</div>
+                                                    <div class="news-subtitle-text" style="font-size: 12px; color: #666; margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">全景财经制作团队</div>
+                                                    <div class="news-info">
+                                                        <span class="news-subtitle">高管访谈</span>
+                                                        <span class="news-date">2024-03-21</span>
+                                                        <button class="invite-btn" style="margin-left: 4px; padding: 2px 8px; font-size: 12px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffccc7; border-radius: 4px; cursor: pointer; transition: all 0.3s;" @click="showActivityDialog = true">发起邀约</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="news-item">
+                                                <div class="news-image">
+                                                    <img src="fmWechatIMG674.jpg" alt="新闻图片">
+                                                </div>
+                                                <div class="news-content">
+                                                    <div class="news-title">视频招股书案例</div>
+                                                    <div class="news-subtitle-text" style="font-size: 12px; color: #666; margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">全景路演制作团队</div>
+                                                    <div class="news-info">
+                                                        <span class="news-subtitle">视频招股书</span>
+                                                        <span class="news-date">2024-03-20</span>
+                                                        <button class="invite-btn" style="margin-left: 4px; padding: 2px 8px; font-size: 12px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffccc7; border-radius: 4px; cursor: pointer; transition: all 0.3s;" @click="showActivityDialog = true">发起邀约</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="news-item">
+                                                <div class="news-image">
+                                                    <img src="3-27.jpg" alt="新闻图片">
+                                                </div>
+                                                <div class="news-content">
+                                                    <div class="news-title">全景直播 | 数字经济引领产业升级投资机遇</div>
+                                                    <div class="news-subtitle-text" style="font-size: 12px; color: #666; margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">科技中国 · 科技智能 "投融资路演活动（杭州）专场-第十二期</div>
+                                                    <div class="news-info">
+                                                        <span class="news-subtitle">项目路演</span>
+                                                        <span class="news-date">2024-03-19</span>
+                                                        <button class="invite-btn" style="margin-left: 4px; padding: 2px 8px; font-size: 12px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffccc7; border-radius: 4px; cursor: pointer; transition: all 0.3s;" @click="showActivityDialog = true">发起邀约</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="news-item">
+                                                <div class="news-image">
+                                                    <img src="fmWechatIMG674.jpg" alt="新闻图片">
+                                                </div>
+                                                <div class="news-content">
+                                                    <div class="news-title">全景观察 | 新能源产业链投资机会分析</div>
+                                                    <div class="news-subtitle-text" style="font-size: 12px; color: #666; margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">科技中国 · 科技智能 "投融资路演活动（杭州）专场-第十二期</div>
+                                                    <div class="news-info">
+                                                        <span class="news-subtitle">项目路演</span>
+                                                        <span class="news-date">2024-03-18</span>
+                                                        <button class="invite-btn" style="margin-left: 4px; padding: 2px 8px; font-size: 12px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffccc7; border-radius: 4px; cursor: pointer; transition: all 0.3s;" @click="showActivityDialog = true">发起邀约</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="news-item">
+                                                <div class="news-image">
+                                                    <img src="3-27.jpg" alt="新闻图片">
+                                                </div>
+                                                <div class="news-content">
+                                                    <div class="news-title">全景解析 | ESG投资趋势与企业可持续发展</div>
+                                                    <div class="news-subtitle-text" style="font-size: 12px; color: #666; margin: 4px 0; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">科技中国 · 科技智能 "投融资路演活动（杭州）专场-第十二期</div>
+                                                    <div class="news-info">
+                                                        <span class="news-subtitle">项目路演</span>
+                                                        <span class="news-date">2024-03-17</span>
+                                                        <button class="invite-btn" style="margin-left: 4px; padding: 2px 8px; font-size: 12px; color: #ff4d4f; background: #fff1f0; border: 1px solid #ffccc7; border-radius: 4px; cursor: pointer; transition: all 0.3s;" @click="showActivityDialog = true">发起邀约</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <!-- 主要内容区域 END -->
+
+                        <!-- 侧边数据看板区域 START -->
+                        <div class="content-side">
+                            <h2 class="section-title">数据看板</h2>
+                            <!-- 统计数据区域 -->
+                            <div class="statistics">
+                                <div class="stat-item">
+                                    <div class="stat-number">7,265</div>
+                                    <div class="stat-label">全景项目总数</div>
+                        </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">3,671</div>
+                                    <div class="stat-label">近期新增项目</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">156</div>
+                                    <div class="stat-label">近期活跃</div>
+                                </div>
+                            </div>
+                            
+                            <!-- 饼图区域 -->
+                            <div id="pieChart" class="chart-container"></div>
+
+                            <!-- 近期活跃企业列表区域 -->
+                            <div class="company-list">
+                                <h3 class="section-title">近期活跃企业</h3>
+                                <el-timeline>
+                                    <div class="scroll-container">
+                                        <el-timeline-item timestamp="刚刚">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                广东全国科技创新投资有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="23分钟前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                广州创新科工程有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="45分钟前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                深圳市智能科技发展有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="1小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                杭州数字科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="2小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                北京未来创新科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="3小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                上海智慧金融科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="4小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                成都新能源科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="5小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                武汉生物医疗科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <!-- 复制前面的项目用于无缝滚动 -->
+                                        <el-timeline-item timestamp="刚刚">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                广东全国科技创新投资有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="23分钟前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                广州创新科工程有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="45分钟前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="success">举办活动</el-tag>
+                                                深圳市智能科技发展有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                        <el-timeline-item timestamp="1小时前">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <el-tag size="small" type="warning">发布视频</el-tag>
+                                                杭州数字科技有限公司
+                                            </div>
+                                        </el-timeline-item>
+                                    </div>
+                                </el-timeline>
+                            </div>
+                        </div>
+                        <!-- 侧边数据看板区域 END -->
+    </div>
+
+                    <!-- 已有预约区域 START -->
+                    <div style="width: 100%; margin-top: 16px;">
+                        <div style="background: #fff; border-radius: 8px; padding: 20px;">
+                            <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 500;">已创建邀约</h3>
+                            <div style="display: flex; gap: 20px;">
+                                <!-- 预约项目卡片 -->
+                                <div style="flex: 1; background: #f7f8fa; border-radius: 8px; padding: 16px;">
+                                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                                        <!-- 顶部信息 -->
+                                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                                            <div style="flex: 1; background: #fff; border-radius: 4px; padding: 12px;">
+                                                <div style="color: #666; font-size: 12px; margin-bottom: 4px;">发起时间</div>
+                                                <div style="color: #333; font-size: 14px;">2025-08-08</div>
+                                            </div>
+                                            <div style="flex: 1; background: #fff; border-radius: 4px; padding: 12px;">
+                                                <div style="color: #666; font-size: 12px; margin-bottom: 4px;">活动方式</div>
+                                                <div style="color: #333; font-size: 14px;">私密会议</div>
+                                            </div>
+                                            <div style="flex: 1; background: #fff; border-radius: 4px; padding: 12px;">
+                                                <div style="color: #666; font-size: 12px; margin-bottom: 4px;">最新进度</div>
+                                                <div style="color: #409EFF; font-size: 14px;">正在联系对手方...</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 公司信息 -->
+                                        <div style="font-size: 14px; font-weight: 500; color: #333;">
+                                            【机构交流】广东玄润数字信息科技股份有限公司
+                                        </div>
+
+                                        <!-- 时间轴 -->
+                                        <div style="display: flex; flex-direction: column; padding-left: 20px; margin-top: 20px;">
+                                            <!-- 成功发起活动 -->
+                                            <div style="display: flex; align-items: flex-start; position: relative;">
+                                                <div style="position: absolute; left: -24px; display: flex; align-items: center;">
+                                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: #52c41a; display: flex; align-items: center; justify-content: center;">
+                                                        <i style="color: white; font-size: 12px;">✓</i>
+                                                    </div>
+                                                    <div style="position: absolute; top: 16px; left: 7px; width: 2px; height: 50px; background: #52c41a;"></div>
+                                                </div>
+                                                <div style="margin-left: 12px;">
+                                                    <div style="font-size: 14px; color: #333; font-weight: 500;">成功发起活动</div>
+                                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">Tuesday, 28 May 2024</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 全景专员联系 -->
+                                            <div style="display: flex; align-items: flex-start; position: relative; margin-top: 16px;">
+                                                <div style="position: absolute; left: -24px; display: flex; align-items: center;">
+                                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: #52c41a; display: flex; align-items: center; justify-content: center;">
+                                                        <i style="color: white; font-size: 12px;">✓</i>
+                                                    </div>
+                                                    <div style="position: absolute; top: 16px; left: 7px; width: 2px; height: 50px; background: #e8e8e8;"></div>
+                                                </div>
+                                                <div style="margin-left: 12px;">
+                                                    <div style="font-size: 14px; color: #333; font-weight: 500;">全景专员联系对手方...</div>
+                                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">Tuesday, 28 May 2024</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 对手方确认 -->
+                                            <div style="display: flex; align-items: flex-start; position: relative; margin-top: 16px;">
+                                                <div style="position: absolute; left: -24px; display: flex; align-items: center;">
+                                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #e8e8e8;"></div>
+                                                    <div style="position: absolute; top: 16px; left: 7px; width: 2px; height: 50px; background: #e8e8e8;"></div>
+                                                </div>
+                                                <div style="margin-left: 12px;">
+                                                    <div style="font-size: 14px; color: #999;">对手方确认活动细节...</div>
+                                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">待定...</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 开始沟通 -->
+                                            <div style="display: flex; align-items: flex-start; position: relative; margin-top: 16px;">
+                                                <div style="position: absolute; left: -24px; display: flex; align-items: center;">
+                                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #e8e8e8;"></div>
+                                                </div>
+                                                <div style="margin-left: 12px;">
+                                                    <div style="font-size: 14px; color: #999;">开始沟通！</div>
+                                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">待定...</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 第二个预约项目卡片 -->
+                                <div style="flex: 1; background: #f7f8fa; border-radius: 8px; padding: 16px;">
+                                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                                        <!-- 顶部信息 -->
+                                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                                            <div style="flex: 1; background: #fff; border-radius: 4px; padding: 12px;">
+                                                <div style="color: #666; font-size: 12px; margin-bottom: 4px;">发起时间</div>
+                                                <div style="color: #333; font-size: 14px;">2025-08-08</div>
+                                            </div>
+                                            <div style="flex: 1; background: #fff; border-radius: 4px; padding: 12px;">
+                                                <div style="color: #666; font-size: 12px; margin-bottom: 4px;">活动方式</div>
+                                                <div style="color: #333; font-size: 14px;">私密会议</div>
+                                            </div>
+                                            <div style="flex: 1; background: #fff; border-radius: 4px; padding: 12px;">
+                                                <div style="color: #666; font-size: 12px; margin-bottom: 4px;">最新进度</div>
+                                                <div style="color: #409EFF; font-size: 14px;">正在联系对手方...</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 公司信息 -->
+                                        <div style="font-size: 14px; font-weight: 500; color: #333;">
+                                            【机构交流】广东玄润数字信息科技股份有限公司
+                                        </div>
+
+                                        <!-- 时间轴 -->
+                                        <div style="display: flex; flex-direction: column; padding-left: 20px; margin-top: 20px;">
+                                            <!-- 成功发起活动 -->
+                                            <div style="display: flex; align-items: flex-start; position: relative;">
+                                                <div style="position: absolute; left: -24px; display: flex; align-items: center;">
+                                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: #52c41a; display: flex; align-items: center; justify-content: center;">
+                                                        <i style="color: white; font-size: 12px;">✓</i>
+                                                    </div>
+                                                    <div style="position: absolute; top: 16px; left: 7px; width: 2px; height: 50px; background: #52c41a;"></div>
+                                                </div>
+                                                <div style="margin-left: 12px;">
+                                                    <div style="font-size: 14px; color: #333; font-weight: 500;">成功发起活动</div>
+                                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">Tuesday, 28 May 2024</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 全景专员联系 -->
+                                            <div style="display: flex; align-items: flex-start; position: relative; margin-top: 16px;">
+                                                <div style="position: absolute; left: -24px; display: flex; align-items: center;">
+                                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: #52c41a; display: flex; align-items: center; justify-content: center;">
+                                                        <i style="color: white; font-size: 12px;">✓</i>
+                                                    </div>
+                                                    <div style="position: absolute; top: 16px; left: 7px; width: 2px; height: 50px; background: #e8e8e8;"></div>
+                                                </div>
+                                                <div style="margin-left: 12px;">
+                                                    <div style="font-size: 14px; color: #333; font-weight: 500;">全景专员联系对手方...</div>
+                                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">Tuesday, 28 May 2024</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 对手方确认 -->
+                                            <div style="display: flex; align-items: flex-start; position: relative; margin-top: 16px;">
+                                                <div style="position: absolute; left: -24px; display: flex; align-items: center;">
+                                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #e8e8e8;"></div>
+                                                    <div style="position: absolute; top: 16px; left: 7px; width: 2px; height: 50px; background: #e8e8e8;"></div>
+                                                </div>
+                                                <div style="margin-left: 12px;">
+                                                    <div style="font-size: 14px; color: #999;">对手方确认活动细节...</div>
+                                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">待定...</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 开始沟通 -->
+                                            <div style="display: flex; align-items: flex-start; position: relative; margin-top: 16px;">
+                                                <div style="position: absolute; left: -24px; display: flex; align-items: center;">
+                                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #e8e8e8;"></div>
+                                                </div>
+                                                <div style="margin-left: 12px;">
+                                                    <div style="font-size: 14px; color: #999;">开始沟通！</div>
+                                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">待定...</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 第三个预约项目卡片 -->
+                                <div style="flex: 1; background: #f7f8fa; border-radius: 8px; padding: 16px;">
+                                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                                        <!-- 顶部信息 -->
+                                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                                            <div style="flex: 1; background: #fff; border-radius: 4px; padding: 12px;">
+                                                <div style="color: #666; font-size: 12px; margin-bottom: 4px;">发起时间</div>
+                                                <div style="color: #333; font-size: 14px;">-</div>
+                                            </div>
+                                            <div style="flex: 1; background: #fff; border-radius: 4px; padding: 12px;">
+                                                <div style="color: #666; font-size: 12px; margin-bottom: 4px;">活动方式</div>
+                                                <div style="color: #333; font-size: 14px;">-</div>
+                                            </div>
+                                            <div style="flex: 1; background: #fff; border-radius: 4px; padding: 12px;">
+                                                <div style="color: #666; font-size: 12px; margin-bottom: 4px;">最新进度</div>
+                                                <div style="color: #999; font-size: 14px;">暂无进度</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 公司信息 -->
+                                        <div style="font-size: 14px; font-weight: 500; color: #999;">
+                                            暂无活动
+                                        </div>
+
+                                        <!-- 时间轴 -->
+                                        <div style="display: flex; flex-direction: column; padding-left: 20px; margin-top: 20px;">
+                                            <!-- 空状态时间轴 -->
+                                            <div style="display: flex; align-items: flex-start; position: relative;">
+                                                <div style="position: absolute; left: -24px; display: flex; align-items: center;">
+                                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #e8e8e8;"></div>
+                                                    <div style="position: absolute; top: 16px; left: 7px; width: 2px; height: 50px; background: #e8e8e8;"></div>
+                                                </div>
+                                                <div style="margin-left: 12px;">
+                                                    <div style="font-size: 14px; color: #999;">等待创建新活动...</div>
+                                                    <div style="font-size: 12px; color: #999; margin-top: 4px;">-</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 已有预约区域 END -->
+
+                </div>
+                <!-- 内容布局区域 END -->
+            </div>
+            <!-- 主内容区域 END -->
+        </div>
+        <!-- 页面主容器 END -->
+
+        <!-- AI 总结浮窗 -->
+        <div v-if="isAiDialogVisible" class="ai-dialog-overlay" @click="hideAiDialog" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+            <div class="ai-dialog" @click.stop style="width: 90%; max-width: 1200px; background: white; border-radius: 8px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);">
+                <!-- 对话框头部 -->
+                <div style="padding: 10px; background: #fff; border-bottom: 1px solid #EBEEF5; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 500;">AI 智能总结</h3>
+                    <div class="close-btn" @click="hideAiDialog" style="cursor: pointer; font-size: 24px; color: #ff4d4f; font-weight: bold;">×</div>
+                </div>
+                <!-- 对话框内容区域 -->
+                <div style="padding: 20px; display: flex; justify-content: center; align-items: center; background: #fff;">
+                    <img src="./截屏2025-03-28 08.50.19.png" alt="AI 总结" style="max-width: 100%; height: auto; object-fit: contain;">
+                </div>
+            </div>
+        </div>
+
+        <!-- 新建活动浮窗 -->
+        <div class="activity-dialog-overlay" :class="{ show: showActivityDialog }" @click.self="showActivityDialog = false">
+            <div class="activity-dialog" style="width: 66%; max-width: 1000px; min-width: 800px; background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);">
+                <div style="padding: 10px; background: #fff; border-bottom: 1px solid #EBEEF5; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 500;">选择活动类型</h3>
+                    <div class="close-btn" @click="showActivityDialog = false" style="cursor: pointer; font-size: 24px; color: #ff4d4f; font-weight: bold;">×</div>
+                </div>
+                <div class="content" style="padding: 24px 32px;">
+                    <p style="margin: 0 0 32px 0; font-size: 14px; color: #666;">请选择适合您需求的活动类型，全景专员将为您提供服务</p>
+                    <div style="display: flex; gap: 24px;">
+                        <!-- 机构路演卡片 -->
+                        <div class="activity-card" style="flex: 1; background: #f8f9fe; border-radius: 12px; padding: 32px; cursor: pointer; transition: all 0.3s; border: 1px solid #e6f7ff;" 
+                             @mouseover="$event.currentTarget.style.transform='translateY(-4px)'; $event.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,0.08)'" 
+                             @mouseout="$event.currentTarget.style.transform='none'; $event.currentTarget.style.boxShadow='none'">
+                            <div style="width: 56px; height: 56px; background: #e6f7ff; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+                                <i class="el-icon-video-camera" style="font-size: 28px; color: #409eff;"></i>
+                            </div>
+                            <h3 style="margin: 0 0 12px 0; font-size: 18px; color: #333; font-weight: 600;">机构路演</h3>
+                            <p style="margin: 0 0 16px 0; font-size: 14px; color: #666; line-height: 1.6;">面向多家机构进行项目展示和交流，提升项目曝光度和对接效率</p>
+                            <ul style="margin: 0 0 24px 0; padding: 0; list-style: none;">
+                                <li style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #666;">
+                                    <i class="el-icon-check" style="color: #409eff;"></i>
+                                    直接接触项目库中开放邀约的机构
+                                </li>
+                                <li style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #666;">
+                                    <i class="el-icon-check" style="color: #409eff;"></i>
+                                    专业的路演支持和会议助手服务
+                                </li>
+                                <li style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+                                    <i class="el-icon-check" style="color: #409eff;"></i>
+                                    支持通过全景媒体矩阵传播
+                                </li>
+                            </ul>
+                            <el-button type="primary" style="width: 100%; height: 40px; font-size: 14px;">选择此类型</el-button>
+                        </div>
+
+                        <!-- 私密会议卡片 -->
+                        <div class="activity-card" style="flex: 1; background: #fff7e6; border-radius: 12px; padding: 32px; cursor: pointer; transition: all 0.3s; border: 1px solid #ffe7ba;" 
+                             @mouseover="$event.currentTarget.style.transform='translateY(-4px)'; $event.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,0.08)'" 
+                             @mouseout="$event.currentTarget.style.transform='none'; $event.currentTarget.style.boxShadow='none'">
+                            <div style="width: 56px; height: 56px; background: #fff1d6; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+                                <i class="el-icon-lock" style="font-size: 28px; color: #faad14;"></i>
+                            </div>
+                            <h3 style="margin: 0 0 12px 0; font-size: 18px; color: #333; font-weight: 600;">私密会议</h3>
+                            <p style="margin: 0 0 16px 0; font-size: 14px; color: #666; line-height: 1.6;">一对一深度交流，保护商业机密，实现精准对接</p>
+                            <ul style="margin: 0 0 24px 0; padding: 0; list-style: none;">
+                                <li style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #666;">
+                                    <i class="el-icon-check" style="color: #faad14;"></i>
+                                    私密空间+深度交流
+                                </li>
+                                <li style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #666;">
+                                    <i class="el-icon-check" style="color: #faad14;"></i>
+                                    协助邀约项目库中对手方
+                                </li>
+                                <li style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+                                    <i class="el-icon-check" style="color: #faad14;"></i>
+                                    提供线上+线下专属会议室
+                                </li>
+                            </ul>
+                            <el-button type="warning" style="width: 100%; height: 40px; font-size: 14px;">选择此类型</el-button>
+                        </div>
+
+                        <!-- 报名参会卡片 -->
+                        <div class="activity-card" style="flex: 1; background: #f6ffed; border-radius: 12px; padding: 32px; cursor: pointer; transition: all 0.3s; border: 1px solid #b7eb8f;" 
+                             @mouseover="$event.currentTarget.style.transform='translateY(-4px)'; $event.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,0.08)'" 
+                             @mouseout="$event.currentTarget.style.transform='none'; $event.currentTarget.style.boxShadow='none'">
+                            <div style="width: 56px; height: 56px; background: #e8f5e9; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+                                <i class="el-icon-user-solid" style="font-size: 28px; color: #52c41a;"></i>
+                            </div>
+                            <h3 style="margin: 0 0 12px 0; font-size: 18px; color: #333; font-weight: 600;">报名参会</h3>
+                            <p style="margin: 0 0 16px 0; font-size: 14px; color: #666; line-height: 1.6;">参与行业主题活动，了解市场动态，寻找合作机会</p>
+                            <ul style="margin: 0 0 24px 0; padding: 0; list-style: none;">
+                                <li style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #666;">
+                                    <i class="el-icon-check" style="color: #52c41a;"></i>
+                                    报名加入活动白名单
+                                </li>
+                                <li style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #666;">
+                                    <i class="el-icon-check" style="color: #52c41a;"></i>
+                                    接收活动提醒
+                                </li>
+                                <li style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666;">
+                                    <i class="el-icon-check" style="color: #52c41a;"></i>
+                                    获取活动资料
+                                </li>
+                            </ul>
+                            <el-button type="success" style="width: 100%; height: 40px; font-size: 14px;">选择此类型</el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue应用初始化脚本 START -->
+    <script>
+        const { createApp, ref } = Vue
+        const app = createApp({
+            setup() {
+                const isAiDialogVisible = ref(false)
+
+                const showAiDialog = () => {
+                    isAiDialogVisible.value = true
+                    document.body.style.overflow = 'hidden'
+                }
+
+                const hideAiDialog = () => {
+                    isAiDialogVisible.value = false
+                    document.body.style.overflow = ''
+                }
+
+                // 新建活动浮窗控制
+                const showActivityDialog = ref(false);
+
+                return {
+                    isAiDialogVisible,
+                    showAiDialog,
+                    hideAiDialog,
+                    showActivityDialog,
+                }
+            },
+            mounted() {
+                // 初始化视频播放器
+                const initVideoPlayer = (videoId, videoSrc) => {
+                    const video = document.getElementById(videoId);
+                    const playButton = video.parentElement.querySelector('.play-button');
+                    
+                    if (Hls.isSupported()) {
+                        const hls = new Hls();
+                        hls.loadSource(videoSrc);
+                        hls.attachMedia(video);
+                        
+                        // 播放按钮事件
+                        playButton.addEventListener('click', () => {
+                            video.play();
+                            playButton.style.display = 'none';
+                        });
+                        
+                        // 视频暂停时显示播放按钮
+                        video.addEventListener('pause', () => {
+                            playButton.style.display = 'flex';
+                        });
+                        
+                        // 视频播放时隐藏播放按钮
+                        video.addEventListener('play', () => {
+                            playButton.style.display = 'none';
+                        });
+                    }
+                    // 对于原生支持 HLS 的浏览器（如 Safari）
+                    else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        video.src = videoSrc;
+                    }
+                };
+
+                // 初始化所有视频播放器
+                const videoSrc = 'https://qlong202406.p5w.net/u/21859/m3u8/adaptive/f71807c49a21750ae0abe7e030587336.m3u8';
+                const videoSrc2 = 'https://qlong202406.p5w.net/u/21859/m3u8/adaptive/04617ea9bebca173b168edd47fbd6e16.m3u8';
+                initVideoPlayer('cardVideo1', videoSrc);
+                initVideoPlayer('cardVideo2', videoSrc2);
+                initVideoPlayer('recentVideo', videoSrc);
+
+                // 初始化饼图
+                const chartDom = document.getElementById('pieChart');
+                const myChart = echarts.init(chartDom);
+                const option = {
+                    title: {
+                        text: '项目分布',
+                        subtext: '行业与区域',
+                        left: 'center',
+                        top: 0,
+                        padding: [0, 0, 20, 0],
+                        textStyle: {
+                            fontSize: 16,
+                            fontWeight: 500
+                        },
+                        subtextStyle: {
+                            fontSize: 12,
+                            padding: [8, 0, 0, 0]
+                        }
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)',
+                        show: false
+                    },
+                    legend: [{
+                        orient: 'horizontal',
+                        bottom: 20,
+                        data: ['华南', '华东', '华北', '西南', '其他地区'],
+                        textStyle: {
+                            fontSize: 12
+                        },
+                        itemWidth: 12,
+                        itemHeight: 12,
+                        itemGap: 16,
+                        left: 'center'
+                    }, {
+                        orient: 'horizontal',
+                        bottom: 0,
+                        data: ['科技创新', '金融投资', '医疗健康', '文化传媒', '其他'],
+                        textStyle: {
+                            fontSize: 12
+                        },
+                        itemWidth: 12,
+                        itemHeight: 12,
+                        itemGap: 16,
+                        left: 'center'
+                    }],
+                    series: [
+                        {
+                            name: '区域分布',
+                            type: 'pie',
+                            selectedMode: 'single',
+                            radius: [0, '35%'],
+                            center: ['50%', '48%'],
+                            label: {
+                                position: 'inner',
+                                fontSize: 12
+                            },
+                            labelLine: {
+                                show: false
+                            },
+                            data: [
+                                { value: 1548, name: '华南' },
+                                { value: 1235, name: '华东' },
+                                { value: 980, name: '华北' },
+                                { value: 684, name: '西南' },
+                                { value: 400, name: '其他地区' }
+                            ]
+                        },
+                        {
+                            name: '行业分布',
+                            type: 'pie',
+                            radius: ['45%', '65%'],
+                            center: ['50%', '48%'],
+                            labelLine: {
+                                length: 15,
+                                length2: 10,
+                                maxSurfaceAngle: 80
+                            },
+                            label: {
+                                formatter: '{b}\n{c} ({d}%)',
+                                fontSize: 12,
+                                lineHeight: 16,
+                                alignTo: 'edge',
+                                edgeDistance: '10%',
+                                distanceToLabelLine: 5
+                            },
+                            data: [
+                                { 
+                                    value: 1048, 
+                                    name: '科技创新',
+                                    itemStyle: { color: '#5470c6' }
+                                },
+                                { 
+                                    value: 735, 
+                                    name: '金融投资',
+                                    itemStyle: { color: '#91cc75' }
+                                },
+                                { 
+                                    value: 580, 
+                                    name: '医疗健康',
+                                    itemStyle: { color: '#fac858' }
+                                },
+                                { 
+                                    value: 484, 
+                                    name: '文化传媒',
+                                    itemStyle: { color: '#ee6666' }
+                                },
+                                { 
+                                    value: 300, 
+                                    name: '其他',
+                                    itemStyle: { color: '#73c0de' }
+                                }
+                            ]
+                        }
+                    ]
+                };
+                myChart.setOption(option);
+
+                // 监听窗口大小变化，调整图表大小
+                window.addEventListener('resize', () => {
+                    myChart.resize();
+                });
+
+                // 初始化企业列表轮播
+                const container = document.querySelector('.scroll-container');
+                if (container) {
+                    // 复制一份列表，用于无缝轮播
+                    const clone = container.cloneNode(true);
+                    container.parentNode.appendChild(clone);
+                }
+            }
+        });
+
+        // 注册Element Plus图标
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component)
+        }
+
+        app.use(ElementPlus)
+        app.mount('#app')
+    </script>
+    <!-- Vue应用初始化脚本 END -->
+</body>
+</html> 

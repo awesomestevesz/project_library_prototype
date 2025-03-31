@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 智能速览</title>
+    <!-- 外部依赖引入 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .dialog-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .dialog-content {
+            width: 80%;
+            max-width: 1200px;
+            min-height: 600px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dialog-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #EBEEF5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dialog-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .dialog-body {
+            flex: 1;
+            display: flex;
+            padding: 24px;
+            gap: 24px;
+            min-height: 0;
+        }
+
+        /* 左侧内容区域 */
+        .left-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .video-preview {
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .keywords-section {
+            background: #F7F8FA;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .keywords-section h3 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .keyword-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .keyword-tag {
+            padding: 4px 12px;
+            background: white;
+            border: 1px solid #DCDFE6;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .summary-section {
+            background: #F7F8FA;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .summary-section h3 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .summary-content {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* 右侧内容区域 */
+        .right-section {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .el-tabs {
+            height: 100%;
+        }
+
+        .el-tabs__content {
+            padding: 16px;
+            background: #F7F8FA;
+            border-radius: 8px;
+            height: calc(100% - 55px);
+            overflow-y: auto;
+        }
+
+        .chapter-preview .preview-card {
+            background: white;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .chapter-preview .preview-card:hover {
+            background: #f5f7fa;
+        }
+
+        .chapter-preview .card-title {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .chapter-preview .card-subtitle {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .speech-summary p,
+        .key-points p {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .key-points ul {
+            margin: 0;
+            padding-left: 16px;
+        }
+
+        .key-points li {
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* 添加关闭按钮样式 */
+        .dialog-header .close-button {
+            width: 32px;
+            height: 32px;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .dialog-header .close-button:hover {
+            background-color: #f5f7fa;
+        }
+
+        .dialog-header .close-button i {
+            font-size: 20px;
+            color: #909399;
+        }
+
+        .dialog-header .close-button:hover i {
+            color: #409EFF;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="dialog-container">
+            <div class="dialog-content">
+                <div class="dialog-header">
+                    <h2>智能速览</h2>
+                    <button class="close-button" @click="closeDialog">
+                        <i class="el-icon-close"></i>
+                    </button>
+                </div>
+                <div class="dialog-body">
+                    <!-- 左侧内容 -->
+                    <div class="left-section">
+                        <!-- 视频预览 -->
+                        <div class="video-preview">
+                            <img src="近期活跃.jpg" alt="视频预览">
+                        </div>
+                        <!-- 关键词 -->
+                        <div class="keywords-section">
+                            <h3>关键词</h3>
+                            <div class="keyword-tags">
+                                <span class="keyword-tag">杭州</span>
+                                <span class="keyword-tag">上市公司</span>
+                                <span class="keyword-tag">后备资源</span>
+                                <span class="keyword-tag">资本市场</span>
+                                <span class="keyword-tag">295家</span>
+                                <span class="keyword-tag">区县分布</span>
+                                <span class="keyword-tag">余杭</span>
+                                <span class="keyword-tag">钱塘</span>
+                                <span class="keyword-tag">滨江</span>
+                                <span class="keyword-tag">IPO</span>
+                            </div>
+                        </div>
+                        <!-- 全文概要 -->
+                        <div class="summary-section">
+                            <h3>全文概要</h3>
+                            <div class="summary-content">
+                                杭州市在新年之初着力推进上市公司后备资源培育，旨在为资本市场持续发展奠定坚实基础。截至2024年2月，已有295家企业被认定为市级及重点拟上市企业，遍布13个区县，预示着余杭、钱塘、滨江等地将掀起IPO热潮。这些企业覆盖多个领域，其中专精特新企业尤其引人注目。显示出强劲的市场活力，市政府金融监管部门的积极推动，加之交易所、金融机构与社会组织的共同关注，为杭州资本市场营造了良好生态。
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧内容 -->
+                    <div class="right-section">
+                        <el-tabs v-model="activeTab">
+                            <!-- 章节速览 -->
+                            <el-tab-pane label="章节速览" name="chapter">
+                                <div class="chapter-preview">
+                                    <div class="preview-card">
+                                        <div class="card-title">杭州目前在上市公司后备资源培育方面的情况如何？</div>
+                                        <div class="card-subtitle">杭州重点拟上市企业的筛选机制是怎样的？</div>
+                                    </div>
+                                    <div class="preview-card">
+                                        <div class="card-title">新年伊始，杭州各地积极做好上市公司后备资源培育工作</div>
+                                        <div class="card-subtitle">截至2024年2月，共有295家企业被认定为市级及重点拟上市企业</div>
+                                    </div>
+                                    <div class="preview-card">
+                                        <div class="card-title">杭州市金融监管部门对上市企业的支持政策有哪些？</div>
+                                        <div class="card-subtitle">探讨政策支持、融资对接等具体措施</div>
+                                    </div>
+                                </div>
+                            </el-tab-pane>
+
+                            <!-- 发言总结 -->
+                            <el-tab-pane label="发言总结" name="speech">
+                                <div class="speech-summary">
+                                    <p>主要围绕杭州市上市公司后备资源培育工作展开，重点介绍了2024年初以来的工作进展和成效。特别强调了295家重点企业的认定情况，以及各区县的分布特点。同时对未来发展趋势进行了展望。</p>
+                                    <p>发言中提到，杭州市将继续深入实施"凤凰行动"计划，通过政策引导、资源整合、服务优化等多种方式，助力优质企业加快对接资本市场。同时，也将进一步完善企业上市培育机制，为企业提供更加精准的服务支持。</p>
+                                </div>
+                            </el-tab-pane>
+
+                            <!-- 要点回顾 -->
+                            <el-tab-pane label="要点回顾" name="points">
+                                <div class="key-points">
+                                    <ul>
+                                        <li>295家企业被认定为重点拟上市企业</li>
+                                        <li>分布于13个区县，重点关注余杭、钱塘、滨江等地</li>
+                                        <li>涵盖专精特新等多个重点领域</li>
+                                        <li>A股上市企业达230家</li>
+                                        <li>境内外上市公司总数超300家</li>
+                                        <li>稳居全国省会城市首位</li>
+                                    </ul>
+                                </div>
+                            </el-tab-pane>
+                        </el-tabs>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue
+
+        const app = createApp({
+            setup() {
+                const activeTab = ref('chapter')
+
+                const closeDialog = () => {
+                    // 关闭对话框的逻辑
+                    window.close()
+                }
+
+                return {
+                    activeTab,
+                    closeDialog
+                }
+            }
+        })
+
+        // 注册Element Plus图标
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component)
+        }
+
+        app.use(ElementPlus)
+        app.mount('#app')
+    </script>
+</body>
+</html> 

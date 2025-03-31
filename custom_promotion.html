@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全景服务平台 - 定制推广</title>
+    <!-- 外部依赖引入 START -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- 外部依赖引入 END -->
+
+    <!-- 页面样式 START -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #EBEEF5;
+        }
+        .container {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        .header {
+            height: 64px;
+            background-color: #EBEEF5;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            right: 0;
+            z-index: 100;
+            box-shadow: none;
+        }
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-logo img {
+            width: 24px;
+            height: 24px;
+        }
+        .header-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            color: #409eff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .header-right .el-icon {
+            margin-left: 8px;
+            font-size: 16px;
+        }
+        .sidebar {
+            flex-shrink: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 101;
+            box-shadow: 1px 0 4px rgba(0, 0, 0, 0.1);
+        }
+        .main-content {
+            flex: 1;
+            width: 0;
+            height: 100vh;
+            background-color: #EBEEF5;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 84px 20px 20px 270px;
+        }
+        .p5w-logo {
+            height: 85px;
+            background: url(p5w_logo.png) no-repeat 50% 50% / auto 45px;
+        }
+        .menu {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-top: 0;
+            border: none;
+            background: transparent;
+        }
+        .menu-item {
+            margin-bottom: 15px;
+            padding: 0;
+            height: 35px;
+            line-height: 35px;
+            border-radius: 5px;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .menu-item:hover {
+            background-color: #f5f7fa;
+            color: #409eff;
+        }
+        .menu-item.active {
+            background-color: #e6f7ff;
+            color: #409eff;
+        }
+        .menu-item i {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        .menu-group-title {
+            padding: 16px 20px;
+            color: #999;
+            font-size: 13px;
+            font-weight: 500;
+            background-color: #fff;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 15px;
+        }
+        /* 顶部导航样式 */
+        .nav-menu {
+            background: transparent;
+            border-radius: 4px;
+            padding: 0;
+            margin-bottom: 16px;
+        }
+        .fastLink {
+            display: flex;
+            padding: 8px;
+            align-items: center;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .fastLink .colT {
+            flex-shrink: 0;
+            padding: 3px 16px;
+            line-height: 20px;
+            color: #9BB1C7;
+            font-weight: bold;
+        }
+        .fastLink .info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .fastLink .col {
+            padding-left: 12px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            border-left: 1px solid #eee;
+            gap: 8px;
+        }
+        .fastLink .item {
+            flex-shrink: 0;
+            padding: 0 16px 0 12px;
+            position: relative;
+            height: 32px;
+            line-height: 32px;
+            border: 1px solid;
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            background-color: #F1F7FE;
+            border-color: #CDE5FF;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .fastLink .item i {
+            font-size: 20px;
+            margin-right: 10px;
+            flex-shrink: 0;
+            background: linear-gradient(0deg, #067EFF, #82BDFF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .fastLink .item:hover {
+            border-color: var(--el-color-primary);
+            color: var(--el-color-primary);
+        }
+        .fastLink .col:nth-child(2) .item {
+            background-color: #FFEFF1;
+            border-color: #FCCFCF;
+        }
+        .fastLink .col:nth-child(2) .item i {
+            background: linear-gradient(0deg, #FB5C5C, #FF7F84);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .fastLink .col:nth-child(2) .item:hover {
+            border-color: #FB5C5C;
+            color: #FB5C5C;
+        }
+        /* 内容区布局 */
+        .content-layout {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .content-main {
+            flex: 2;
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            min-width: 600px;
+        }
+        .content-side {
+            flex: 1;
+            background: #fff;
+            border-radius: 4px;
+            padding: 20px;
+            min-width: 300px;
+        }
+        /* 项目库头部样式 */
+        .database-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding: 16px 20px;
+            background: #fff;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .database-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .database-title i {
+            font-size: 24px;
+            color: #333;
+        }
+        .database-title h1 {
+            font-size: 18px;
+            color: #333;
+            margin: 0;
+            font-weight: 500;
+        }
+        .database-actions {
+            display: flex;
+            gap: 16px;
+        }
+        .action-button {
+            padding: 4px 12px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .action-button:hover {
+            color: #409eff;
+        }
+        .action-button.active {
+            color: #409eff;
+            font-weight: 500;
+            position: relative;
+        }
+        .action-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 2px;
+            background-color: #409eff;
+            border-radius: 1px;
+        }
+        /* 子菜单样式 */
+        .section-submenu {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 20px;
+            padding: 0 4px;
+        }
+        .submenu-item {
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            padding: 6px 0;
+            position: relative;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .submenu-item:hover {
+            color: #409eff;
+        }
+        .submenu-item.active {
+            color: #409eff;
+            font-weight: 500;
+        }
+        .submenu-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #409eff;
+            border-radius: 1px;
+        }
+        .video-container {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .video-list-container {
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        /* 数据统计 */
+        .statistics {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+        }
+        /* 饼图区域 */
+        .chart-container {
+            height: 400px;
+            margin: 24px 0 32px 0;
+            background: #fff;
+            border-radius: 4px;
+            padding: 16px 0;
+        }
+        /* 近期活跃企业列表样式 */
+        .company-list {
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        /* 快捷操作按钮 */
+        .quick-actions {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+    </style>
+    <!-- 页面样式 END -->
+</head>
+<body>
+    <div id="app">
+        <!-- 页面主容器 START -->
+        <div class="container">
+            <!-- 左侧边栏 START -->
+            <div class="sidebar">
+                <!-- Logo区域 -->
+                <div class="p5w-logo"></div>
+                
+                <!-- 菜单导航区域 START -->
+                <div class="menu">
+                    <!-- 首页菜单项 -->
+                    <div class="menu-item">
+                        <a href="project_library.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%;">
+                            <i class="i-ri-home-4-line"></i>
+                            首页
+                        </a>
+                    </div>
+
+                    <!-- 全景智慧投融资菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">全景智慧投融资</div>
+                        <div class="menu-item active">
+                            <i class="i-ri-stack-line"></i>
+                            项目库
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-stack-line"></i>
+                            中介机构
+                        </div>
+                    </div>
+
+                    <!-- 价值传播菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">价值传播</div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            发起会议(路演)
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            智慧投关中心
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            观点传播中心
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-coin-line"></i>
+                            全景IP专题展播
+                        </div>
+                    </div>
+
+                    <!-- 全景影响力菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">全景影响力</div>
+                        <div class="menu-item">
+                            <i class="i-ri-compass-discover-line"></i>
+                            宣传平台及内容定制
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-compass-discover-line"></i>
+                            企业ESG
+                        </div>
+                    </div>
+
+                    <!-- 会员菜单组 -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">会员</div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-diamond-line"></i>
+                            权益
+                        </div>
+                        <div class="menu-item">
+                            <i class="i-ri-copper-diamond-line"></i>
+                            场地租赁
+                        </div>
+                    </div>
+                </div>
+                <!-- 菜单导航区域 END -->
+            </div>
+            <!-- 左侧边栏 END -->
+
+            <!-- 主内容区域 START -->
+            <div class="main-content">
+                <!-- 顶部导航栏 START -->
+                <div class="header">
+                    <div class="header-logo">
+                        <span class="header-title">全景服务平台原型图</span>
+                    </div>
+                    <div class="header-right">
+                        <span>去登录</span>
+                        <i class="el-icon-user"></i>
+                    </div>
+                </div>
+                <!-- 顶部导航栏 END -->
+
+                <!-- 快捷连接导航区域 START -->
+                <div class="nav-menu">
+                    <div class="fastLink">
+                        <p class="colT">快 捷<br/>连 接</p>
+                        <section class="info">
+                            <div class="col">
+                                <div class="item"><i class="i-ri-apps-fill"></i>找项目</div>
+                                <div class="item"><i class="i-ri-copper-coin-fill"></i>找资金</div>
+                                <div class="item"><i class="i-ri-eye-2-line"></i>找综合解决方案</div>
+                            </div>
+                            <div class="col">
+                                <div class="item"><i class="i-ri-copper-diamond-fill"></i>会员权益</div>
+                                <div class="item"><i class="i-mingcute-safety-certificate-fill"></i>机构认证</div>
+                            </div>
+                            <div class="col">
+                                <div class="item"><i class="i-ri-contacts-fill"></i>联系专员</div>
+                                <div class="item"><i class="i-ri-smartphone-fill"></i>移动办公</div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                <!-- 快捷连接导航区域 END -->
+
+                <!-- 快捷操作按钮区域 START -->
+                <div class="quick-actions">
+                    <el-button type="primary">
+                        <i class="el-icon-message"></i>
+                        一级市场
+                    </el-button>
+                    <el-button>
+                        <i class="el-icon-setting"></i>
+                        机构交流
+                    </el-button>
+                </div>
+                <!-- 快捷操作按钮区域 END -->
+
+                <!-- 内容布局区域 START -->
+                <div class="content-layout">
+                    <!-- 项目库头部 START -->
+                    <div class="database-header" style="width: 100%;">
+                        <div class="database-title">
+                            <i class="i-ri-database-2-line"></i>
+                            <h1>全景项目库</h1>
+                        </div>
+                        <div class="database-actions">
+                            <span class="action-button active">全景推荐</span>
+                            <span class="action-button">区域推荐</span>
+                            <span class="action-button">买方发布</span>
+                        </div>
+                    </div>
+                    <!-- 项目库头部 END -->
+
+                    <div style="display: flex; gap: 16px; width: 100%;">
+                        <!-- 主要内容区域 START -->
+                        <div class="content-main">
+                            <!-- 子菜单 START -->
+                            <div class="section-submenu">
+                                <div class="submenu-item" onclick="window.location.href='project_list.html'">预约对话</div>
+                                <div class="submenu-item" onclick="window.location.href='deep_info.html'">深度资料</div>
+                                <div class="submenu-item active">定制推广</div>
+                            </div>
+                            <!-- 子菜单 END -->
+                            
+                            <!-- 视频内容区域 START -->
+                            <div class="video-container">
+                                <!-- 主视频区域 -->
+                                <div class="main-video" style="position: relative; width: 100%; padding-top: 56.25%; background: #000;">
+                                    <video id="mainVideo" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" controls>
+                                        您的浏览器不支持 HTML5 视频播放。
+                                    </video>
+                                    <!-- 视频信息悬浮层 -->
+                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%); padding: 32px 20px 20px; color: #fff; z-index: 1;">
+                                        <h3 style="margin: 0 0 8px 0; font-size: 18px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">全景集体项目路演活动</h3>
+                                        <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">适合大型投资机构、政府部门定制</p>
+                                    </div>
+                                    <div class="play-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">
+                                        <i class="el-icon-video-play" style="font-size: 24px; color: #409eff;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 视频列表区域 -->
+                            <div class="video-list-container">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                                    <h3 style="margin: 0; font-size: 16px;">更多视频</h3>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button class="scroll-button left" style="width: 32px; height: 32px; border: 1px solid #dcdfe6; background: #fff; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                                            <i class="el-icon-arrow-left" style="color: #606266;"></i>
+                                        </button>
+                                        <button class="scroll-button right" style="width: 32px; height: 32px; border: 1px solid #dcdfe6; background: #fff; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                                            <i class="el-icon-arrow-right" style="color: #606266;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="video-list" style="display: flex; gap: 16px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
+                                    <!-- 视频项目1 -->
+                                    <div class="project-card" style="flex: 0 0 280px; background: #fff; border-radius: 8px; overflow: hidden; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                                        <div class="card-video" style="position: relative; width: 100%; padding-top: 56.25%; background: #000;">
+                                            <video id="cardVideo1" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" controls>
+                                                您的浏览器不支持 HTML5 视频播放。
+                                            </video>
+                                            <!-- 视频信息悬浮层 -->
+                                            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%); padding: 12px; color: #fff; z-index: 1;">
+                                                <div style="font-size: 12px; color: rgba(255,255,255,0.9);">03:45</div>
+                                            </div>
+                                            <div class="play-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; transition: all 0.3s;">
+                                                <i class="el-icon-video-play" style="font-size: 20px; color: #409eff;"></i>
+                                            </div>
+                                        </div>
+                                        <div class="card-content" style="padding: 16px;">
+                                            <h3 style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.4; color: #333; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">高端访谈：创始人专访</h3>
+                                            <p style="margin: 0 0 12px 0; color: #666; font-size: 12px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">通过全景矩阵传播，获得最大宣传效果</p>
+                                            <div class="project-tags" style="display: flex; gap: 8px;">
+                                                <span style="padding: 2px 8px; background: #f0f7ff; color: #409eff; border-radius: 4px; font-size: 12px;">定制推广</span>
+                                                <span style="padding: 2px 8px; background: #f6ffed; color: #52c41a; border-radius: 4px; font-size: 12px;">企业访谈</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- 视频项目2 -->
+                                    <div class="project-card" style="flex: 0 0 280px; background: #fff; border-radius: 8px; overflow: hidden; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+                                        <div class="card-video" style="position: relative; width: 100%; padding-top: 56.25%; background: #000;">
+                                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://img.p5w.net/d/2024/0304/thumb_1000_666_20240304095916854.jpg') center/cover no-repeat;"></div>
+                                            <!-- 视频信息悬浮层 -->
+                                            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%); padding: 12px; color: #fff; z-index: 1;">
+                                                <div style="font-size: 12px; color: rgba(255,255,255,0.9);">05:23</div>
+                                            </div>
+                                            <div class="play-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; transition: all 0.3s;">
+                                                <i class="el-icon-video-play" style="font-size: 20px; color: #409eff;"></i>
+                                            </div>
+                                        </div>
+                                        <div class="card-content" style="padding: 16px;">
+                                            <h3 style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.4; color: #333; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">高端访谈：中国动漫产业发展趋势</h3>
+                                            <p style="margin: 0 0 12px 0; color: #666; font-size: 12px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">深度解析中国动漫产业发展现状与未来趋势，探讨投资机遇</p>
+                                            <div class="project-tags" style="display: flex; gap: 8px;">
+                                                <span style="padding: 2px 8px; background: #f0f7ff; color: #409eff; border-radius: 4px; font-size: 12px;">定制推广</span>
+                                                <span style="padding: 2px 8px; background: #fff7e6; color: #fa8c16; border-radius: 4px; font-size: 12px;">行业分析</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- 视频项目3 -->
+                                    <div class="video-item" style="flex: 0 0 280px; cursor: pointer;">
+                                        <div style="height: 157px; background: url('https://img.p5w.net/d/2024/0304/thumb_1000_666_20240304095916854.jpg') center/cover no-repeat; border-radius: 4px; margin-bottom: 10px;"></div>
+                                        <h4 style="margin: 0 0 5px 0; font-size: 14px; line-height: 1.4;">高端访谈：动漫IP价值探讨</h4>
+                                        <div style="color: #999; font-size: 12px;">
+                                            <span>2.5万次观看</span>
+                                            <span style="margin-left: 10px;">2024-03-02</span>
+                                        </div>
+                                    </div>
+                                    <!-- 视频项目4 -->
+                                    <div class="video-item" style="flex: 0 0 280px; cursor: pointer;">
+                                        <div style="height: 157px; background: url('https://img.p5w.net/d/2024/0304/thumb_1000_666_20240304095916854.jpg') center/cover no-repeat; border-radius: 4px; margin-bottom: 10px;"></div>
+                                        <h4 style="margin: 0 0 5px 0; font-size: 14px; line-height: 1.4;">高端访谈：文化产业投资机遇</h4>
+                                        <div style="color: #999; font-size: 12px;">
+                                            <span>1.9万次观看</span>
+                                            <span style="margin-left: 10px;">2024-03-01</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 视频内容区域 END -->
+                        </div>
+                        <!-- 主要内容区域 END -->
+
+                        <!-- 侧边数据看板区域 START -->
+                        <div class="content-side">
+                            <!-- 这里是定制推广的数据看板区域，暂时为空 -->
+                        </div>
+                        <!-- 侧边数据看板区域 END -->
+                    </div>
+                </div>
+                <!-- 内容布局区域 END -->
+            </div>
+            <!-- 主内容区域 END -->
+        </div>
+        <!-- 页面主容器 END -->
+    </div>
+
+    <!-- Vue应用初始化脚本 START -->
+    <script>
+        const { createApp } = Vue
+        const app = createApp({
+            setup() {
+                return {}
+            },
+            mounted() {
+                // 初始化主视频播放器
+                const video = document.getElementById('mainVideo');
+                const videoSrc = 'https://qlong202406.p5w.net/u/21859/m3u8/adaptive/f71807c49a21750ae0abe7e030587336.m3u8';
+                
+                if (Hls.isSupported()) {
+                    const hls = new Hls();
+                    hls.loadSource(videoSrc);
+                    hls.attachMedia(video);
+                    
+                    // 初始化卡片视频播放器
+                    const cardVideo = document.getElementById('cardVideo1');
+                    const cardHls = new Hls();
+                    cardHls.loadSource(videoSrc);
+                    cardHls.attachMedia(cardVideo);
+                    
+                    // 主视频播放按钮事件
+                    const playButton = document.querySelector('.main-video .play-button');
+                    playButton.addEventListener('click', () => {
+                        video.play();
+                        playButton.style.display = 'none';
+                    });
+                    
+                    // 卡片视频播放按钮事件
+                    const cardPlayButton = document.querySelector('.card-video .play-button');
+                    cardPlayButton.addEventListener('click', () => {
+                        cardVideo.play();
+                        cardPlayButton.style.display = 'none';
+                    });
+                    
+                    // 视频暂停时显示播放按钮
+                    video.addEventListener('pause', () => {
+                        playButton.style.display = 'flex';
+                    });
+                    
+                    cardVideo.addEventListener('pause', () => {
+                        cardPlayButton.style.display = 'flex';
+                    });
+                    
+                    // 视频播放时隐藏播放按钮
+                    video.addEventListener('play', () => {
+                        playButton.style.display = 'none';
+                    });
+                    
+                    cardVideo.addEventListener('play', () => {
+                        cardPlayButton.style.display = 'none';
+                    });
+                }
+                // 对于原生支持 HLS 的浏览器（如 Safari）
+                else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = videoSrc;
+                    cardVideo.src = videoSrc;
+                }
+            }
+        })
+
+        // 注册Element Plus图标
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component)
+        }
+
+        app.use(ElementPlus)
+        app.mount('#app')
+    </script>
+    <!-- Vue应用初始化脚本 END -->
+</body>
+</html> 
